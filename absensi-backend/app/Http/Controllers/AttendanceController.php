@@ -187,6 +187,34 @@ class AttendanceController extends Controller
     }
 
     /**
+     * Absensi untuk kelas di mana siswa yang sedang login ditunjuk sebagai
+     * Seksi Absensi (siswa yang membantu memantau absensi kelasnya sendiri).
+     */
+    public function mySeksiClassAttendance(Request $request)
+    {
+        $student = $request->user()->student;
+
+        if (! $student) {
+            return response()->json(['message' => 'Akun ini tidak terhubung ke data siswa.'], 422);
+        }
+
+        $class = $student->classAsSeksiAbsensi;
+
+        if (! $class) {
+            return response()->json(['message' => 'Kamu bukan Seksi Absensi kelas manapun.'], 422);
+        }
+
+        $query = Attendance::with(['student.schoolClass'])
+            ->whereHas('student', fn ($q) => $q->where('class_id', $class->id))
+            ->orderByDesc('date');
+
+        $this->applyDateRangeFilter($query, $request);
+        $this->applySearchAndStatusFilter($query, $request);
+
+        return response()->json($query->paginate($request->integer('per_page', 15)));
+    }
+
+    /**
      * Semua absensi (Admin & Seksi Absensi). Mendukung search, filter kelas,
      * filter status, dan date range.
      */
@@ -220,7 +248,10 @@ class AttendanceController extends Controller
             'wali_kelas' => $user->teacher
                 && $attendance->student->class_id
                 && $user->teacher->classesAsWali()->where('id', $attendance->student->class_id)->exists(),
-            'siswa' => $user->student && $attendance->student_id === $user->student->id,
+            'siswa' => $user->student && (
+                $attendance->student_id === $user->student->id
+                || ($user->student->classAsSeksiAbsensi && $user->student->classAsSeksiAbsensi->id === $attendance->student->class_id)
+            ),
             default => false,
         };
 

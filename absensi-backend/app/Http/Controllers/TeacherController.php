@@ -43,7 +43,7 @@ class TeacherController extends Controller
                 'name' => $data['name'],
                 'email' => $data['email'],
                 'password' => Hash::make($data['password'] ?? $data['nip']),
-                'role' => $data['role'],
+                'role' => 'wali_kelas',
             ]);
 
             return Teacher::create([

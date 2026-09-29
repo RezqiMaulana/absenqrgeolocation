@@ -34,6 +34,7 @@ Route::middleware('auth:sanctum')->group(function () {
     Route::middleware('role:siswa')->post('/attendance', [AttendanceController::class, 'store']);
     Route::middleware('role:siswa')->get('/attendance/me', [AttendanceController::class, 'myAttendance']);
     Route::middleware('role:wali_kelas')->get('/attendance/my-class', [AttendanceController::class, 'myClassAttendance']);
+    Route::middleware('role:siswa')->get('/attendance/my-seksi-class', [AttendanceController::class, 'mySeksiClassAttendance']);
     Route::middleware('role:admin,seksi_absensi')->get('/attendance', [AttendanceController::class, 'index']);
     Route::middleware('role:admin,seksi_absensi,wali_kelas,siswa')->get('/attendance/{attendance}', [AttendanceController::class, 'show']);
 

@@ -11,13 +11,17 @@ return new class extends Migration
         Schema::create('classes', function (Blueprint $table) {
             $table->id();
             $table->string('name')->unique(); // contoh: XII RPL 1
-            $table->foreignId('wali_kelas_id')->nullable()->constrained('teachers')->nullOnDelete();
+            $table->foreignId('wali_kelas_id')->nullable();
+            $table->foreignId('seksi_absensi_id')
+                ->nullable();
             $table->timestamps();
         });
     }
 
     public function down(): void
     {
-        Schema::dropIfExists('classes');
+        Schema::table('classes', function (Blueprint $table) {
+            $table->dropConstrainedForeignId('seksi_absensi_id');
+        });
     }
 };

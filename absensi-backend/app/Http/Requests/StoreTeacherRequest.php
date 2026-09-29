@@ -19,7 +19,6 @@ class StoreTeacherRequest extends FormRequest
             'phone' => ['nullable', 'string', 'max:20'],
             'email' => ['required', 'email', 'unique:users,email'],
             'password' => ['nullable', 'string', 'min:6'],
-            'role' => ['required', 'in:wali_kelas,seksi_absensi'],
         ];
     }
 }

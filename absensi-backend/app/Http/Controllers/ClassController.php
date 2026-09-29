@@ -11,7 +11,7 @@ class ClassController extends Controller
 {
     public function index(Request $request)
     {
-        $query = SchoolClass::with('waliKelas')
+        $query = SchoolClass::with(['waliKelas', 'seksiAbsensi'])
             ->withCount('students')
             ->orderBy('name');
 
@@ -24,7 +24,7 @@ class ClassController extends Controller
 
     public function show(SchoolClass $class)
     {
-        return response()->json($class->load(['waliKelas', 'students']));
+        return response()->json($class->load(['waliKelas', 'seksiAbsensi', 'students']));
     }
 
     public function store(StoreClassRequest $request)
@@ -33,7 +33,7 @@ class ClassController extends Controller
 
         return response()->json([
             'message' => 'Kelas berhasil ditambahkan',
-            'class' => $class->load('waliKelas'),
+            'class' => $class->load(['waliKelas', 'seksiAbsensi']),
         ], 201);
     }
 
@@ -43,7 +43,7 @@ class ClassController extends Controller
 
         return response()->json([
             'message' => 'Kelas berhasil diperbarui',
-            'class' => $class->fresh('waliKelas'),
+            'class' => $class->fresh(['waliKelas', 'seksiAbsensi']),
         ]);
     }
 

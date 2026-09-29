@@ -33,14 +33,11 @@ class AuthController extends Controller
 
         $token = $user->createToken('auth_token')->plainTextToken;
 
+        $user->load(['student.schoolClass', 'student.classAsSeksiAbsensi', 'teacher.classesAsWali']);
+
         return response()->json([
             'message' => 'Login berhasil',
-            'user' => [
-                'id' => $user->id,
-                'name' => $user->name,
-                'email' => $user->email,
-                'role' => $user->role,
-            ],
+            'user' => $user,
             'token' => $token,
             'token_type' => 'Bearer',
         ]);
@@ -63,7 +60,7 @@ class AuthController extends Controller
      */
     public function me(Request $request)
     {
-        $user = $request->user()->load(['student', 'teacher']);
+        $user = $request->user()->load(['student.schoolClass', 'student.classAsSeksiAbsensi', 'teacher.classesAsWali']);
 
         return response()->json([
             'user' => $user,

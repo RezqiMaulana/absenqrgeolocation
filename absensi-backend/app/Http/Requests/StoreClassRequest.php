@@ -16,6 +16,7 @@ class StoreClassRequest extends FormRequest
         return [
             'name' => ['required', 'string', 'max:100', 'unique:classes,name'],
             'wali_kelas_id' => ['nullable', 'exists:teachers,id'],
+            'seksi_absensi_id' => ['nullable', 'exists:students,id'],
         ];
     }
 }

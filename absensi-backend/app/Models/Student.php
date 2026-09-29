@@ -28,4 +28,13 @@ class Student extends Model
     {
         return $this->hasMany(Attendance::class);
     }
+
+    /**
+     * Kelas di mana siswa ini ditunjuk sebagai Seksi Absensi (kalau ada).
+     * Satu siswa maksimal jadi seksi absensi untuk satu kelas.
+     */
+    public function classAsSeksiAbsensi()
+    {
+        return $this->hasOne(SchoolClass::class, 'seksi_absensi_id');
+    }
 }

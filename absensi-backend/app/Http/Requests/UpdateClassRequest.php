@@ -18,6 +18,7 @@ class UpdateClassRequest extends FormRequest
         return [
             'name' => ['sometimes', 'required', 'string', 'max:100', 'unique:classes,name,'.$classId],
             'wali_kelas_id' => ['nullable', 'exists:teachers,id'],
+            'seksi_absensi_id' => ['nullable', 'exists:students,id'],
         ];
     }
 }
