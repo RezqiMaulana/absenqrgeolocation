@@ -104,6 +104,7 @@ export default function AdminKelas() {
               <tr className="text-left text-text-secondary border-b border-border">
                 <th className="p-space-sm">Nama Kelas</th>
                 <th className="p-space-sm">Wali Kelas</th>
+                <th className="p-space-sm">Seksi Absensi</th>
                 <th className="p-space-sm">Jumlah Siswa</th>
                 <th className="p-space-sm text-right">Aksi</th>
               </tr>
@@ -111,13 +112,13 @@ export default function AdminKelas() {
             <tbody>
               {loading ? (
                 <tr>
-                  <td colSpan={4} className="p-space-lg text-center text-text-secondary">
+                  <td colSpan={5} className="p-space-lg text-center text-text-secondary">
                     Memuat...
                   </td>
                 </tr>
               ) : classes.length === 0 ? (
                 <tr>
-                  <td colSpan={4} className="p-space-lg text-center text-text-secondary">
+                  <td colSpan={5} className="p-space-lg text-center text-text-secondary">
                     Tidak ada data kelas.
                   </td>
                 </tr>
@@ -126,6 +127,7 @@ export default function AdminKelas() {
                   <tr key={c.id} className="border-b border-border hover:bg-surface-subtle">
                     <td className="p-space-sm font-medium text-text-primary">{c.name}</td>
                     <td className="p-space-sm">{c.wali_kelas?.name || '-'}</td>
+                    <td className="p-space-sm">{c.seksi_absensi?.name || '-'}</td>
                     <td className="p-space-sm font-tabular">{c.students_count ?? '-'}</td>
                     <td className="p-space-sm text-right">
                       <button

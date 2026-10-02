@@ -45,7 +45,14 @@ export default function Login() {
     <div className="relative w-full min-h-screen flex flex-col lg:flex-row bg-background">
       {/* Panel kiri: hero showcase (desktop only) */}
       <div className="relative hidden lg:flex lg:w-1/2 flex-col justify-between p-margin-desktop overflow-hidden bg-primary-container text-on-primary select-none">
-        <div className="absolute inset-0 bg-gradient-to-t from-primary via-primary-container/90 to-primary/80 z-0" />
+
+        <img 
+        src="../../assets/backgroundNesas.jpg"
+        alt="Background Sekolah" 
+        className="absolute inset-0 w-full h-full object-cover z-0" 
+        />
+
+        <div className="absolute inset-0 bg-gradient-to-t from-primary via-primary-container/90 to-primary/80 z-10" />
 
         <div className="relative z-20 flex items-center justify-between">
           <div className="flex items-center space-x-space-sm bg-surface/10 backdrop-blur-md px-space-md py-space-xs rounded-full">
@@ -66,7 +73,7 @@ export default function Login() {
         <div className="relative z-20 my-auto py-space-xl max-w-lg">
           <div className="inline-flex items-center gap-space-xs px-space-sm py-0.5 rounded-full bg-surface-variant/20 text-inverse-primary text-label-sm mb-space-md">
             <span className="material-symbols-outlined text-[16px]">verified</span>
-            Sistem Absensi Digital
+            Versi Institusi v1.0.0
           </div>
           <h1 className="text-headline-lg text-surface font-bold tracking-tight mb-space-md leading-tight">
             Gerbang Presensi Digital Masa Depan

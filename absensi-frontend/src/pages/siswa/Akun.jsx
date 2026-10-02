@@ -1,9 +1,10 @@
-import { useNavigate } from 'react-router-dom';
+import { useNavigate, Link } from 'react-router-dom';
 import { useAuth } from '../../context/AuthContext';
 
 export default function SiswaAkun() {
   const { user, logout } = useAuth();
   const navigate = useNavigate();
+  const isSeksiAbsensi = Boolean(user?.student?.class_as_seksi_absensi);
 
   async function handleLogout() {
     await logout();
@@ -27,6 +28,19 @@ export default function SiswaAkun() {
           </div>
         )}
       </div>
+
+      {isSeksiAbsensi && (
+        <Link
+          to="/siswa/monitoring-kelas"
+          className="flex items-center justify-between bg-surface border border-border rounded-xl p-space-md"
+        >
+          <div className="flex items-center gap-space-sm">
+            <span className="material-symbols-outlined text-primary-container">groups</span>
+            <span className="text-body-md font-medium text-text-primary">Monitoring Kelas (Seksi Absensi)</span>
+          </div>
+          <span className="material-symbols-outlined text-text-secondary">chevron_right</span>
+        </Link>
+      )}
 
       <button
         onClick={handleLogout}

@@ -10,6 +10,10 @@ import AdminGuru from './pages/admin/Guru';
 import AdminKelas from './pages/admin/Kelas';
 import StaffDashboard from './pages/staff/Dashboard';
 import StaffMonitoring from './pages/staff/Monitoring';
+import SiswaBeranda from './pages/siswa/Beranda';
+import SiswaScanQR from './pages/siswa/ScanQR';
+import SiswaRiwayat from './pages/siswa/Riwayat';
+import SiswaMonitoringKelas from './pages/siswa/MonitoringKelas';
 import SiswaAkun from './pages/siswa/Akun';
 import PlaceholderPage from './pages/PlaceholderPage';
 
@@ -59,9 +63,10 @@ export default function App() {
           </ProtectedRoute>
         }
       >
-        <Route path="/siswa/beranda" element={<PlaceholderPage title="Beranda" />} />
-        <Route path="/siswa/riwayat" element={<PlaceholderPage title="Riwayat Presensi" />} />
-        <Route path="/siswa/scan" element={<PlaceholderPage title="Scan QR" />} />
+        <Route path="/siswa/beranda" element={<SiswaBeranda />} />
+        <Route path="/siswa/riwayat" element={<SiswaRiwayat />} />
+        <Route path="/siswa/scan" element={<SiswaScanQR />} />
+        <Route path="/siswa/monitoring-kelas" element={<SiswaMonitoringKelas />} />
         <Route path="/siswa/akun" element={<SiswaAkun />} />
       </Route>
 

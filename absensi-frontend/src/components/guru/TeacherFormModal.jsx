@@ -2,7 +2,7 @@ import { useEffect, useState } from 'react';
 import Modal from '../Modal';
 import api from '../../lib/api';
 
-const emptyForm = { nip: '', name: '', phone: '', email: '', password: '', role: 'wali_kelas' };
+const emptyForm = { nip: '', name: '', phone: '', email: '', password: '' };
 
 export default function TeacherFormModal({ open, onClose, onSaved, teacher }) {
   const [form, setForm] = useState(emptyForm);
@@ -19,7 +19,6 @@ export default function TeacherFormModal({ open, onClose, onSaved, teacher }) {
         phone: teacher.phone || '',
         email: '',
         password: '',
-        role: teacher.user?.role || 'wali_kelas',
       });
     } else {
       setForm(emptyForm);
@@ -50,7 +49,6 @@ export default function TeacherFormModal({ open, onClose, onSaved, teacher }) {
           phone: form.phone || null,
           email: form.email,
           password: form.password || undefined,
-          role: form.role,
         });
       }
       onSaved();
@@ -77,18 +75,10 @@ export default function TeacherFormModal({ open, onClose, onSaved, teacher }) {
 
         {!isEdit && (
           <>
-            <div>
-              <label className="block text-label-md font-medium text-text-primary mb-space-xs">Peran (Role)</label>
-              <select
-                name="role"
-                value={form.role}
-                onChange={handleChange}
-                className="w-full h-11 px-space-md rounded-lg border border-border bg-surface text-body-md focus:outline-none focus:ring-2 focus:ring-primary-container"
-              >
-                <option value="wali_kelas">Wali Kelas</option>
-                <option value="seksi_absensi">Seksi Absensi</option>
-              </select>
-            </div>
+            <p className="text-body-sm text-text-secondary bg-surface-container-low rounded-lg p-space-sm">
+              Guru yang ditambahkan di sini akan dibuatkan akun dengan peran <strong>Wali Kelas</strong>.
+              Untuk Seksi Absensi, pilih dari daftar siswa lewat halaman Kelola Kelas.
+            </p>
             <Field
               label="Email (untuk akun login)"
               name="email"

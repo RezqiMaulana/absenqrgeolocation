@@ -2,6 +2,7 @@ import { useEffect, useState } from 'react';
 import api from '../../lib/api';
 import StatCard from '../../components/dashboard/StatCard';
 import StatusBadge from '../../components/StatusBadge';
+import QrDisplayModal from '../../components/dashboard/QrDisplayModal';
 
 export default function AdminDashboard() {
   const [loading, setLoading] = useState(true);
@@ -9,6 +10,7 @@ export default function AdminDashboard() {
   const [setting, setSetting] = useState(null);
   const [totalSiswa, setTotalSiswa] = useState(0);
   const [todayAttendance, setTodayAttendance] = useState([]);
+  const [qrModalOpen, setQrModalOpen] = useState(false);
 
   useEffect(() => {
     loadDashboard();
@@ -64,19 +66,30 @@ export default function AdminDashboard() {
     <div className="space-y-space-lg">
       {/* Banner sesi presensi aktif */}
       {setting && (
-        <div className="bg-surface-container-low border border-border rounded-xl p-space-md flex items-center gap-space-sm">
-          <span className="material-symbols-outlined text-primary-container">radio_button_checked</span>
-          <div>
-            <div className="text-body-md font-semibold text-text-primary">
-              Presensi {setting.location_name} sedang berjalan
-            </div>
-            <div className="text-body-sm text-text-secondary">
-              Jam absensi {setting.start_time?.slice(0, 5)} - {setting.end_time?.slice(0, 5)} WIB • Radius aktif{' '}
-              {setting.radius_meters} meter
+        <div className="bg-surface-container-low border border-border rounded-xl p-space-md flex items-center justify-between gap-space-sm flex-wrap">
+          <div className="flex items-center gap-space-sm">
+            <span className="material-symbols-outlined text-primary-container">radio_button_checked</span>
+            <div>
+              <div className="text-body-md font-semibold text-text-primary">
+                Presensi {setting.location_name} sedang berjalan
+              </div>
+              <div className="text-body-sm text-text-secondary">
+                Jam absensi {setting.start_time?.slice(0, 5)} - {setting.end_time?.slice(0, 5)} WIB • Radius aktif{' '}
+                {setting.radius_meters} meter
+              </div>
             </div>
           </div>
+          <button
+            onClick={() => setQrModalOpen(true)}
+            className="h-10 px-space-md rounded-lg bg-primary-container text-on-primary font-semibold hover:bg-primary flex items-center gap-space-xs shrink-0"
+          >
+            <span className="material-symbols-outlined text-[18px]">qr_code_2</span>
+            Tampilkan QR Hari Ini
+          </button>
         </div>
       )}
+
+      <QrDisplayModal open={qrModalOpen} onClose={() => setQrModalOpen(false)} />
 
       {/* Stat cards */}
       <div className="grid grid-cols-2 lg:grid-cols-4 gap-space-md">
