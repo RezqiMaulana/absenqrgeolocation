@@ -5,8 +5,10 @@ namespace App\Http\Controllers;
 use App\Http\Requests\StoreAttendanceRequest;
 use App\Models\Attendance;
 use App\Models\AttendanceSetting;
+use App\Models\Student;
 use App\Support\QrTokenGenerator;
 use Illuminate\Http\Request;
+use Carbon\Carbon;
 
 class AttendanceController extends Controller
 {
@@ -97,9 +99,6 @@ class AttendanceController extends Controller
         $now = now();
         $startTime = $now->copy()->setTimeFromTimeString($setting->start_time);
         $endTime = $now->copy()->setTimeFromTimeString($setting->end_time);
-        // Toleransi terlambat: 15 menit setelah jam mulai masih dianggap "hadir",
-        // setelah itu sampai jam selesai dianggap "terlambat".
-        $lateThreshold = $startTime->copy()->addMinutes(15);
 
         if ($now->lt($startTime)) {
             return response()->json([
@@ -107,13 +106,10 @@ class AttendanceController extends Controller
             ], 422);
         }
 
-        if ($now->gt($endTime)) {
-            return response()->json([
-                'message' => 'Waktu absensi sudah berakhir (batas jam '.$setting->end_time.').',
-            ], 422);
-        }
-
-        $status = $now->lte($lateThreshold) ? 'hadir' : 'terlambat';
+        // Tentukan status berdasarkan end_time:
+        // - Jika waktu sekarang <= end_time, statusnya 'hadir'
+        // - Jika waktu sekarang > end_time, statusnya otomatis 'terlambat' (tetap diizinkan absen)
+        $status = $now->lte($endTime) ? 'hadir' : 'terlambat';  
 
         // ---- 7. Simpan absensi ----
         $attendance = Attendance::create([
@@ -138,6 +134,111 @@ class AttendanceController extends Controller
                 'status' => $status,
             ],
         ], 201);
+    }
+
+    public function classDailyMonitoring(Request $request)
+    {
+    $user = $request->user();
+    
+    if ($user->role !== 'wali_kelas') {
+        return response()->json(['message' => 'Unauthorized'], 403);
+    }
+
+    $date = $request->get('date', now()->format('Y-m-d'));
+    $search = $request->get('search');
+    $statusFilter = $request->get('status');
+
+    // PERIKSA NAMA KOLOM INI: Ubah 'class_id' menjadi 'school_class_id' jika struktur database Anda menggunakan itu
+    $query = Student::where('class_id', $user->class_id); 
+    // Contoh jika menggunakan school_class_id:
+    // $query = Student::where('school_class_id', $user->class_id);
+
+    if ($search) {
+        $query->where(function($q) use ($search) {
+            $q->where('name', 'like', "%{$search}%")
+              ->orWhere('nis', 'like', "%{$search}%");
+        });
+    }
+
+    $students = $query->paginate(15);
+
+    $students->getCollection()->transform(function ($student) use ($date, $statusFilter) {
+        $attendance = Attendance::where('student_id', $student->id)
+            ->whereDate('date', $date)
+            ->first();
+
+        return [
+            'student_id' => $student->id,
+            'nis' => $student->nis,
+            'name' => $student->name,
+            'time' => $attendance ? $attendance->time : null,
+            'distance_meters' => $attendance ? $attendance->distance_meters : null,
+            'status' => $attendance ? $attendance->status : 'alpa',
+        ];
+    });
+
+    if ($statusFilter) {
+        $filteredCollection = $students->getCollection()->filter(function ($item) use ($statusFilter) {
+            return $item['status'] === $statusFilter;
+        });
+        $students->setCollection($filteredCollection);
+    }
+
+    return response()->json($students);
+    }
+
+    public function storePermission(Request $request)
+    {
+    $user = $request->user();
+
+    // Validasi ketat: Hanya izinkan jika rolenya wali_kelas atau seksi_absensi (dan admin jika diperlukan)
+    if (!in_array($user->role, ['wali_kelas', 'seksi_absensi', 'admin'])) {
+        return response()->json([
+            'message' => 'Akses ditolak. Hanya Wali Kelas dan Seksi Absensi yang dapat menginput izin atau sakit.'
+        ], 403);
+    }
+
+    $request->validate([
+        'student_id' => 'required|exists:students,id',
+        'status'     => 'required|in:izin,sakit',
+        'date'       => 'required|date',
+        'note'       => 'nullable|string|max:255', 
+    ]);
+
+    // Jika yang login adalah Wali Kelas, kita bisa batasi agar dia hanya bisa menginput 
+    // siswa yang berada di kelas binaannya (opsional tapi sangat direkomendasikan)
+    $student = Student::findOrFail($request->student_id);
+    if ($user->role === 'wali_kelas' && $user->class_id !== $student->class_id) {
+        return response()->json([
+            'message' => 'Anda hanya dapat menginput izin/sakit untuk siswa di kelas Anda.'
+        ], 403);
+    }
+
+    // Proses simpan atau update data absensi
+    $existingAttendance = Attendance::where('student_id', $request->student_id)
+        ->whereDate('date', $request->date)
+        ->first();
+
+    if ($existingAttendance) {
+        $existingAttendance->update([
+            'status' => $request->status,
+            'time'   => now()->format('H:i:s'),
+        ]);
+    } else {
+        Attendance::create([
+            'student_id' => $request->student_id,
+            'date'       => $request->date,
+            'time'       => now()->format('H:i:s'),
+            'status'     => $request->status, 
+            'latitude'   => null,
+            'longitude'  => null,
+            'distance_meters' => null,
+        ]);
+    }
+
+    return response()->json([
+        'message' => 'Status izin/sakit siswa berhasil dicatat.',
+    ], 200);
     }
 
     /**
@@ -260,6 +361,58 @@ class AttendanceController extends Controller
         }
 
         return response()->json($attendance);
+    }
+
+    public function weeklyStats(Request $request)
+    {
+    $type = $request->get('this_week', true); // true untuk pekan ini, false untuk pekan lalu
+    
+    // Tentukan awal minggu (Senin) dan akhir minggu (Jumat/Minggu)
+    $startDate = now();
+    if (!$type) {
+        $startDate->subWeek();
+    }
+    
+    // Pastikan mengambil dari Senin minggu tersebut
+    $startOfWeek = $startDate->copy()->startOfWeek(Carbon::MONDAY)->startOfDay();
+    $endOfWeek = $startDate->copy()->endOfWeek(Carbon::SUNDAY)->endOfDay();
+    
+    $totalStudents = Student::count(); // Total seluruh siswa terdaftar (misal: 66)
+    if ($totalStudents === 0) $totalStudents = 1; // Mencegah division by zero
+
+    $days = ['Senin', 'Selasa', 'Rabu', 'Kamis', 'Jumat'];
+    $result = [];
+
+    // Loop dari Senin sampai Jumat
+    $currentDayWalker = $startOfWeek->copy();
+    for ($i = 0; $i < 5; $i++) {
+        $dateStr = $currentDayWalker->format('Y-m-d');
+        $dayName = $days[$i];
+
+        // Ambil data absensi berdasarkan tanggal spesifik hari tersebut
+        $attendances = Attendance::whereDate('date', $dateStr)->get();
+
+        $hadir = $attendances->where('status', 'hadir')->count();
+        $terlambat = $attendances->where('status', 'terlambat')->count();
+        $izinSakit = $attendances->whereIn('status', ['izin', 'sakit'])->count();
+        
+        // Hitung alpa (sisa siswa yang tidak ada catatan hadir, terlambat, maupun izin/sakit)
+        $totalMasuk = $hadir + $terlambat + $izinSakit;
+        $alpa = max(0, $totalStudents - $totalMasuk);
+
+        // Jika ingin bentuk persentase (%) untuk grafik:
+        $result[] = [
+            'hari' => $dayName,
+            'hadir' => (float) number_format(($hadir / $totalStudents) * 100, 1),
+            'terlambat' => (float) number_format(($terlambat / $totalStudents) * 100, 1),
+            'izin_sakit' => (float) number_format(($izinSakit / $totalStudents) * 100, 1),
+            'alpa' => (float) number_format(($alpa / $totalStudents) * 100, 1),
+        ];
+
+        $currentDayWalker->addDay();
+    }
+
+    return response()->json(['data' => $result]);
     }
 
     private function applyDateRangeFilter($query, Request $request): void

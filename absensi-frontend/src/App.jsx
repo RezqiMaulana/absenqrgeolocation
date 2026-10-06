@@ -5,6 +5,8 @@ import DashboardLayout from './layouts/DashboardLayout';
 import StudentLayout from './layouts/StudentLayout';
 import Login from './pages/Login';
 import AdminDashboard from './pages/admin/Dashboard';
+import AdminGeolocation from './pages/admin/Geolocation';
+import AdminLaporan from './pages/admin/Laporan';
 import AdminSiswa from './pages/admin/Siswa';
 import AdminGuru from './pages/admin/Guru';
 import AdminKelas from './pages/admin/Kelas';
@@ -15,7 +17,6 @@ import SiswaScanQR from './pages/siswa/ScanQR';
 import SiswaRiwayat from './pages/siswa/Riwayat';
 import SiswaMonitoringKelas from './pages/siswa/MonitoringKelas';
 import SiswaAkun from './pages/siswa/Akun';
-import PlaceholderPage from './pages/PlaceholderPage';
 
 const ROLE_HOME = {
   admin: '/admin/dashboard',
@@ -46,11 +47,11 @@ export default function App() {
         }
       >
         <Route path="/admin/dashboard" element={<AdminDashboard />} />
-        <Route path="/admin/geolocation" element={<PlaceholderPage title="Konfigurasi Geolocation" />} />
+        <Route path="/admin/geolocation" element={<AdminGeolocation />} />
         <Route path="/admin/siswa" element={<AdminSiswa />} />
         <Route path="/admin/guru" element={<AdminGuru />} />
         <Route path="/admin/kelas" element={<AdminKelas />} />
-        <Route path="/admin/laporan" element={<PlaceholderPage title="Laporan & Rekapitulasi" />} />
+        <Route path="/admin/laporan" element={<AdminLaporan />} />
         <Route path="/staff/dashboard" element={<StaffDashboard />} />
         <Route path="/staff/monitoring" element={<StaffMonitoring />} />
       </Route>

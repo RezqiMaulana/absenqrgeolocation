@@ -23,7 +23,7 @@ export default function Sidebar({ role, schoolName = 'SMKN 1 Sumedang' }) {
   const menu = MENU_BY_ROLE[role] || [];
 
   return (
-    <aside className="hidden lg:flex lg:flex-col w-[240px] shrink-0 bg-primary min-h-screen text-surface">
+    <aside className="hidden lg:flex lg:flex-col w-[240px] shrink-0 bg-primary text-surface sticky top-0 h-screen overflow-y-auto">
       <div className="p-space-lg border-b border-surface/10">
         <div className="text-headline-sm font-bold leading-tight">{schoolName}</div>
         <div className="text-label-sm text-surface-variant/70">PresensiQu • Portal Presensi</div>

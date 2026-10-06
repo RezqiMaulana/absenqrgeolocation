@@ -2,6 +2,7 @@
 
 use App\Http\Controllers\AttendanceController;
 use App\Http\Controllers\AttendanceSettingController;
+use App\Http\Controllers\ReportController;
 use App\Http\Controllers\AuthController;
 use App\Http\Controllers\ClassController;
 use App\Http\Controllers\StudentController;
@@ -30,7 +31,11 @@ Route::middleware('auth:sanctum')->group(function () {
     // ----------------------------------------
     // QR ATTENDANCE
     // ----------------------------------------
+    Route::post('/attendance/permission', [AttendanceController::class, 'storePermission'])
+         ->middleware('role:wali_kelas,seksi_absensi');
+    Route::get('/attendance/class-daily-monitoring', [AttendanceController::class, 'classDailyMonitoring']);
     Route::middleware('role:admin')->get('/qr/token', [AttendanceController::class, 'qrToken']);
+    Route::middleware('role:admin')->get('/attendance/weekly-stats', [AttendanceController::class, 'weeklyStats']);
     Route::middleware('role:siswa')->post('/attendance', [AttendanceController::class, 'store']);
     Route::middleware('role:siswa')->get('/attendance/me', [AttendanceController::class, 'myAttendance']);
     Route::middleware('role:wali_kelas')->get('/attendance/my-class', [AttendanceController::class, 'myClassAttendance']);
@@ -48,12 +53,9 @@ Route::middleware('auth:sanctum')->group(function () {
         Route::apiResource('classes', ClassController::class)->parameters([
             'classes' => 'class',
         ]);
-    });
 
-    // ----------------------------------------
-    // PHASE 6+ akan ditambahkan di sini:
-    // Route::middleware('role:admin')->post('/students/import', ...);
-    // Route::middleware('role:admin,wali_kelas,seksi_absensi')->group(function () { ... monitoring ... });
-    // Route::middleware('role:siswa')->group(function () { ... scan QR, absensi ... });
-    // ----------------------------------------
+        Route::get('/reports/recap', [ReportController::class, 'recap']);
+        Route::get('/reports/recap/export-excel', [ReportController::class, 'exportExcel']);
+        Route::get('/reports/recap/export-pdf', [ReportController::class, 'exportPdf']);
+    });
 });

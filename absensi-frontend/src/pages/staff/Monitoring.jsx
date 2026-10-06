@@ -11,23 +11,23 @@ export default function StaffMonitoring() {
   const [meta, setMeta] = useState({ current_page: 1, last_page: 1, total: 0 });
   const [search, setSearch] = useState('');
   const [status, setStatus] = useState('');
-  const [dateFrom, setDateFrom] = useState(new Date().toISOString().slice(0, 10));
-  const [dateTo, setDateTo] = useState(new Date().toISOString().slice(0, 10));
+  const [date, setDate] = useState(new Date().toISOString().slice(0, 10)); // Menggunakan single date agar mudah rekap per hari
   const [page, setPage] = useState(1);
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState('');
+  const [savingId, setSavingId] = useState(null);
 
   const loadData = useCallback(async () => {
     setLoading(true);
     setError('');
     try {
-      const endpoint = isWaliKelas ? '/attendance/my-class' : '/attendance';
+      // Endpoint khusus wali kelas yang mengembalikan rekap harian seluruh siswa kelasnya
+      const endpoint = isWaliKelas ? '/attendance/class-daily-monitoring' : '/attendance';
       const res = await api.get(endpoint, {
         params: {
           search: search || undefined,
           status: status || undefined,
-          date_from: dateFrom || undefined,
-          date_to: dateTo || undefined,
+          date: date || undefined,
           page,
         },
       });
@@ -38,20 +38,39 @@ export default function StaffMonitoring() {
     } finally {
       setLoading(false);
     }
-  }, [isWaliKelas, search, status, dateFrom, dateTo, page]);
+  }, [isWaliKelas, search, status, date, page]);
 
   useEffect(() => {
     loadData();
   }, [loadData]);
 
+  // Fungsi untuk mengubah/menginput status bagi siswa yang belum absen (izin/sakit)
+  const handleStatusChange = async (studentId, newStatus) => {
+    if (!newStatus) return;
+    setSavingId(studentId);
+    try {
+      await api.post('/attendance/permission', {
+        student_id: studentId,
+        status: newStatus,
+        date: date,
+      });
+      // Muat ulang data agar status langsung terbarui di tabel
+      loadData();
+    } catch (err) {
+      alert(err.response?.data?.message || 'Gagal mengubah status absensi.');
+    } finally {
+      setSavingId(null);
+    }
+  };
+
   return (
     <div className="space-y-space-lg">
       <div>
         <h1 className="text-headline-md font-bold text-text-primary">
-          {isWaliKelas ? 'Monitoring Kehadiran Kelas' : 'Monitoring Kehadiran'}
+          {isWaliKelas ? 'Monitoring & Input Kehadiran Kelas' : 'Monitoring Kehadiran'}
         </h1>
         <p className="text-body-md text-text-secondary">
-          {isWaliKelas ? 'Log presensi siswa di kelas yang kamu ampu.' : 'Log presensi seluruh siswa.'}
+          {isWaliKelas ? 'Kelola kehadiran dan input izin/sakit siswa di kelas Anda.' : 'Log presensi seluruh siswa.'}
         </p>
       </div>
 
@@ -83,22 +102,16 @@ export default function StaffMonitoring() {
             <option value="">Semua Status</option>
             <option value="hadir">Tepat Waktu</option>
             <option value="terlambat">Terlambat</option>
+            <option value="izin">Izin</option>
+            <option value="sakit">Sakit</option>
+            <option value="alpa">Alpa / Belum Absen</option>
           </select>
           <input
             type="date"
-            value={dateFrom}
+            value={date}
             onChange={(e) => {
               setPage(1);
-              setDateFrom(e.target.value);
-            }}
-            className="h-10 px-space-md rounded-lg border border-border text-body-md focus:outline-none focus:ring-2 focus:ring-primary-container"
-          />
-          <input
-            type="date"
-            value={dateTo}
-            onChange={(e) => {
-              setPage(1);
-              setDateTo(e.target.value);
+              setDate(e.target.value);
             }}
             className="h-10 px-space-md rounded-lg border border-border text-body-md focus:outline-none focus:ring-2 focus:ring-primary-container"
           />
@@ -110,42 +123,63 @@ export default function StaffMonitoring() {
           <table className="w-full text-body-md">
             <thead>
               <tr className="text-left text-text-secondary border-b border-border">
-                <th className="p-space-sm">Tanggal</th>
                 <th className="p-space-sm">NIS</th>
-                <th className="p-space-sm">Nama</th>
-                <th className="p-space-sm">Kelas</th>
-                <th className="p-space-sm">Jam</th>
-                <th className="p-space-sm">Jarak</th>
-                <th className="p-space-sm">Status</th>
+                <th className="p-space-sm">Nama Siswa</th>
+                <th className="p-space-sm">Jam Absen</th>
+                <th className="p-space-sm">Jarak GPS</th>
+                <th className="p-space-sm">Status Kehadiran</th>
               </tr>
             </thead>
             <tbody>
               {loading ? (
                 <tr>
-                  <td colSpan={7} className="p-space-lg text-center text-text-secondary">
+                  <td colSpan={5} className="p-space-lg text-center text-text-secondary">
                     Memuat...
                   </td>
                 </tr>
               ) : rows.length === 0 ? (
                 <tr>
-                  <td colSpan={7} className="p-space-lg text-center text-text-secondary">
-                    Tidak ada data absensi pada rentang ini.
+                  <td colSpan={5} className="p-space-lg text-center text-text-secondary">
+                    Tidak ada siswa ditemukan di kelas ini.
                   </td>
                 </tr>
               ) : (
-                rows.map((r) => (
-                  <tr key={r.id} className="border-b border-border hover:bg-surface-subtle">
-                    <td className="p-space-sm">{r.date?.slice(0, 10)}</td>
-                    <td className="p-space-sm font-tabular">{r.student?.nis}</td>
-                    <td className="p-space-sm font-medium text-text-primary">{r.student?.name}</td>
-                    <td className="p-space-sm">{r.student?.school_class?.name || '-'}</td>
-                    <td className="p-space-sm font-tabular">{r.time?.slice(0, 5)}</td>
-                    <td className="p-space-sm text-text-secondary">{Number(r.distance_meters).toFixed(0)}m</td>
-                    <td className="p-space-sm">
-                      <StatusBadge status={r.status} />
-                    </td>
-                  </tr>
-                ))
+                rows.map((r) => {
+                  // Cek apakah siswa sudah melakukan absen otomatis (hadir/terlambat)
+                  const isLocked = r.status === 'hadir' || r.status === 'terlambat';
+
+                  return (
+                    <tr key={r.student_id || r.id} className="border-b border-border hover:bg-surface-subtle">
+                      <td className="p-space-sm font-tabular">{r.nis}</td>
+                      <td className="p-space-sm font-medium text-text-primary">{r.name}</td>
+                      <td className="p-space-sm font-tabular">{r.time ? r.time.slice(0, 5) : '-'}</td>
+                      <td className="p-space-sm text-text-secondary">
+                        {r.distance_meters ? `${Number(r.distance_meters).toFixed(0)}m` : '-'}
+                      </td>
+                      <td className="p-space-sm">
+                        {isLocked ? (
+                          // Jika sudah absen mandiri (hadir/terlambat), status dikunci (hanya tampil badge)
+                          <div className="flex items-center gap-2">
+                            <StatusBadge status={r.status} />
+                            <span className="text-xs text-gray-400 italic">(Terkunci)</span>
+                          </div>
+                        ) : (
+                          // Jika belum absen, wali kelas bisa mengubah/menginput status (Izin/Sakit/Alpa)
+                          <select
+                            value={r.status || 'alpa'}
+                            disabled={savingId === r.student_id}
+                            onChange={(e) => handleStatusChange(r.student_id, e.target.value)}
+                            className="px-2 py-1 rounded border border-border text-sm bg-white focus:ring-2 focus:ring-primary-container"
+                          >
+                            <option value="alpa">Alpa / Belum</option>
+                            <option value="izin">Izin</option>
+                            <option value="sakit">Sakit</option>
+                          </select>
+                        )}
+                      </td>
+                    </tr>
+                  );
+                })
               )}
             </tbody>
           </table>
@@ -153,7 +187,7 @@ export default function StaffMonitoring() {
 
         <div className="flex items-center justify-between mt-space-md text-body-sm text-text-secondary">
           <span>
-            Halaman {meta.current_page} dari {meta.last_page} • Total {meta.total} log
+            Halaman {meta.current_page} dari {meta.last_page} | Total {meta.total} siswa
           </span>
           <div className="flex gap-space-xs">
             <button

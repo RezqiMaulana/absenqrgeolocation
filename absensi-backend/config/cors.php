@@ -20,7 +20,7 @@ return [
     'allowed_methods' => ['*'],
 
     'allowed_origins' => [
-        'https://cda3-114-122-77-74.ngrok-free.app',
+        'https://e665-2404-c0-2e10-00-4d41-e4da.ngrok-free.app',
     ],
 
     'allowed_origins_patterns' => [],

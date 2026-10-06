@@ -30,10 +30,14 @@ export default function SiswaScanQR() {
         video: { facingMode: 'environment' },
       });
       streamRef.current = stream;
-      if (videoRef.current) {
-        videoRef.current.srcObject = stream;
-        await videoRef.current.play();
-      }
+
+      // PENTING: elemen <video> SELALU ada di DOM (lihat JSX di bawah,
+      // tidak lagi dirender kondisional per step), jadi videoRef.current
+      // di sini dijamin sudah terpasang sebelum stream di-attach.
+      const video = videoRef.current;
+      video.srcObject = stream;
+      await video.play();
+
       setStep('scanning');
       tick();
     } catch (err) {
@@ -45,6 +49,7 @@ export default function SiswaScanQR() {
     if (rafRef.current) cancelAnimationFrame(rafRef.current);
     streamRef.current?.getTracks().forEach((t) => t.stop());
     streamRef.current = null;
+    if (videoRef.current) videoRef.current.srcObject = null;
   }
 
   function tick() {
@@ -185,24 +190,25 @@ export default function SiswaScanQR() {
         </form>
       )}
 
-      {step === 'scanning' && (
-        <div className="space-y-space-md">
-          <div className="relative rounded-xl overflow-hidden bg-black aspect-square">
-            <video ref={videoRef} className="w-full h-full object-cover" muted playsInline />
-            <div className="absolute inset-8 border-2 border-secondary-container rounded-xl" />
-          </div>
-          <p className="text-body-sm text-text-secondary text-center">Arahkan kamera ke QR Code...</p>
-          <button
-            onClick={() => {
-              stopCamera();
-              reset();
-            }}
-            className="w-full h-11 rounded-lg border border-border text-text-primary font-medium hover:bg-surface-subtle"
-          >
-            Batal
-          </button>
+      {/* Kontainer video SELALU di-render (tidak kondisional) supaya videoRef
+          sudah terpasang sebelum stream kamera di-attach. Disembunyikan via
+          CSS ("hidden") saat bukan step 'scanning'. */}
+      <div className={`space-y-space-md ${step === 'scanning' ? '' : 'hidden'}`}>
+        <div className="relative rounded-xl overflow-hidden bg-black aspect-square">
+          <video ref={videoRef} className="w-full h-full object-cover" muted playsInline autoPlay />
+          <div className="absolute inset-8 border-2 border-secondary-container rounded-xl pointer-events-none" />
         </div>
-      )}
+        <p className="text-body-sm text-text-secondary text-center">Arahkan kamera ke QR Code...</p>
+        <button
+          onClick={() => {
+            stopCamera();
+            reset();
+          }}
+          className="w-full h-11 rounded-lg border border-border text-text-primary font-medium hover:bg-surface-subtle"
+        >
+          Batal
+        </button>
+      </div>
 
       {step === 'processing' && (
         <div className="bg-surface border border-border rounded-xl p-space-lg text-center space-y-space-md">
