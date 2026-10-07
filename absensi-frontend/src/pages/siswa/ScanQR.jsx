@@ -2,10 +2,6 @@ import { useEffect, useRef, useState } from 'react';
 import jsQR from 'jsqr';
 import api from '../../lib/api';
 
-// idle -> meminta izin kamera belum dimulai
-// scanning -> kamera aktif, mencari QR
-// processing -> QR ketemu, sedang ambil lokasi & kirim ke server
-// result -> hasil akhir (sukses/gagal)
 export default function SiswaScanQR() {
   const videoRef = useRef(null);
   const canvasRef = useRef(null);
@@ -31,9 +27,6 @@ export default function SiswaScanQR() {
       });
       streamRef.current = stream;
 
-      // PENTING: elemen <video> SELALU ada di DOM (lihat JSX di bawah,
-      // tidak lagi dirender kondisional per step), jadi videoRef.current
-      // di sini dijamin sudah terpasang sebelum stream di-attach.
       const video = videoRef.current;
       video.srcObject = stream;
       await video.play();
@@ -135,124 +128,158 @@ export default function SiswaScanQR() {
   }
 
   return (
-    <div className="p-space-md space-y-space-md">
-      <h1 className="text-headline-md font-bold text-text-primary pt-space-sm">Scan QR Absensi</h1>
+    <div className="p-4 sm:p-6 space-y-6 max-w-lg mx-auto pb-24">
+      {/* Header Halaman */}
+      <div>
+        <h1 className="text-headline-md font-bold text-text-primary">Scan QR Absensi</h1>
+        <p className="text-body-sm text-text-secondary">Lakukan presensi harian secara mandiri di gerbang sekolah</p>
+      </div>
 
+      {/* State Idle: Tampilan awal sebelum kamera aktif */}
       {step === 'idle' && !manualMode && (
-        <div className="bg-surface border border-border rounded-xl p-space-lg text-center space-y-space-md">
-          <span className="material-symbols-outlined text-primary-container text-[56px]">qr_code_scanner</span>
-          <p className="text-body-md text-text-secondary">
-            Arahkan kamera ke QR Code yang ditampilkan Admin/Petugas di gerbang sekolah. Pastikan GPS/lokasi
-            perangkat kamu aktif.
-          </p>
-          {cameraError && <p className="text-body-sm text-error">{cameraError}</p>}
-          <button
-            onClick={startCamera}
-            className="w-full h-11 rounded-lg bg-primary-container text-on-primary font-semibold hover:bg-primary flex items-center justify-center gap-space-xs"
-          >
-            <span className="material-symbols-outlined text-[20px]">photo_camera</span>
-            Izinkan Lokasi &amp; Scan QR
-          </button>
-          <button
-            onClick={() => setManualMode(true)}
-            className="w-full h-11 rounded-lg border border-border text-text-primary font-medium hover:bg-surface-subtle"
-          >
-            Input Kode Alternatif Manual
-          </button>
+        <div className="bg-surface border border-border rounded-2xl p-6 sm:p-8 text-center space-y-5 shadow-xs">
+          <div className="w-20 h-20 rounded-2xl bg-primary-container/10 text-primary-container flex items-center justify-center mx-auto shadow-xs">
+            <span className="material-symbols-outlined text-[40px]">qr_code_scanner</span>
+          </div>
+          <div className="space-y-1">
+            <h2 className="text-headline-sm font-semibold text-text-primary">Arahkan Kamera ke QR Gerbang</h2>
+            <p className="text-body-sm text-text-secondary leading-relaxed">
+              Pastikan GPS atau izin lokasi perangkat Anda aktif agar validasi radius sekolah berhasil diverifikasi sistem.
+            </p>
+          </div>
+
+          {cameraError && (
+            <div className="bg-error-container text-on-error-container rounded-xl p-3 text-body-sm flex items-center gap-2">
+              <span className="material-symbols-outlined text-[18px]">error</span>
+              <span>{cameraError}</span>
+            </div>
+          )}
+
+          <div className="space-y-3 pt-2">
+            <button
+              onClick={startCamera}
+              className="w-full h-11 rounded-xl bg-primary-container text-on-primary font-semibold hover:opacity-90 flex items-center justify-center gap-2 transition shadow-xs"
+            >
+              <span className="material-symbols-outlined text-[20px]">photo_camera</span>
+              Izinkan Lokasi &amp; Scan QR
+            </button>
+            <button
+              onClick={() => setManualMode(true)}
+              className="w-full h-11 rounded-xl border border-border bg-surface text-text-primary font-medium hover:bg-surface-container-low transition"
+            >
+              Input Kode Alternatif Manual
+            </button>
+          </div>
         </div>
       )}
 
+      {/* State Manual Input */}
       {manualMode && step === 'idle' && (
-        <form onSubmit={handleManualSubmit} className="bg-surface border border-border rounded-xl p-space-lg space-y-space-md">
-          <label className="block text-label-md font-medium text-text-primary">Kode QR (ditulis manual)</label>
-          <input
-            type="text"
-            value={manualToken}
-            onChange={(e) => setManualToken(e.target.value)}
-            placeholder="Tempel/ketik kode QR di sini"
-            className="w-full h-11 px-space-md rounded-lg border border-border text-body-md focus:outline-none focus:ring-2 focus:ring-primary-container"
-          />
-          <div className="flex gap-space-sm">
+        <form onSubmit={handleManualSubmit} className="bg-surface border border-border rounded-2xl p-6 space-y-5 shadow-xs">
+          <div>
+            <h2 className="text-headline-sm font-semibold text-text-primary mb-1">Input Kode Token Manual</h2>
+            <p className="text-body-sm text-text-secondary">Masukkan string token QR yang diberikan petugas jika kamera bermasalah.</p>
+          </div>
+          <div className="space-y-1.5">
+            <label className="block text-label-md font-medium text-text-primary">Token Absensi</label>
+            <input
+              type="text"
+              value={manualToken}
+              onChange={(e) => setManualToken(e.target.value)}
+              placeholder="Contoh: TOKEN-QR-XYZ123"
+              className="w-full h-11 px-4 rounded-xl border border-border bg-surface text-body-md focus:outline-none focus:ring-2 focus:ring-primary-container transition"
+            />
+          </div>
+          <div className="flex gap-3 pt-2">
             <button
               type="button"
               onClick={() => setManualMode(false)}
-              className="flex-1 h-11 rounded-lg border border-border text-text-primary font-medium hover:bg-surface-subtle"
+              className="flex-1 h-11 rounded-xl border border-border text-text-primary font-medium hover:bg-surface-container-low transition"
             >
               Batal
             </button>
             <button
               type="submit"
-              className="flex-1 h-11 rounded-lg bg-primary-container text-on-primary font-semibold hover:bg-primary"
+              className="flex-1 h-11 rounded-xl bg-primary-container text-on-primary font-semibold hover:opacity-90 transition shadow-xs"
             >
-              Kirim
+              Kirim Token
             </button>
           </div>
         </form>
       )}
 
-      {/* Kontainer video SELALU di-render (tidak kondisional) supaya videoRef
-          sudah terpasang sebelum stream kamera di-attach. Disembunyikan via
-          CSS ("hidden") saat bukan step 'scanning'. */}
-      <div className={`space-y-space-md ${step === 'scanning' ? '' : 'hidden'}`}>
-        <div className="relative rounded-xl overflow-hidden bg-black aspect-square">
+      {/* State Scanning: Kamera Aktif */}
+      <div className={`space-y-4 ${step === 'scanning' ? '' : 'hidden'}`}>
+        <div className="relative rounded-2xl overflow-hidden bg-black aspect-square shadow-md border border-border">
           <video ref={videoRef} className="w-full h-full object-cover" muted playsInline autoPlay />
-          <div className="absolute inset-8 border-2 border-secondary-container rounded-xl pointer-events-none" />
+          {/* Border panduan pemindai kotak tengah */}
+          <div className="absolute inset-12 border-2 border-primary-container/80 rounded-2xl pointer-events-none flex items-center justify-center">
+            <div className="w-full h-0.5 bg-primary-container/50 animate-pulse"></div>
+          </div>
         </div>
-        <p className="text-body-sm text-text-secondary text-center">Arahkan kamera ke QR Code...</p>
+        <p className="text-body-sm text-text-secondary text-center font-medium">Posisikan QR Code di dalam kotak pemindai...</p>
         <button
           onClick={() => {
             stopCamera();
             reset();
           }}
-          className="w-full h-11 rounded-lg border border-border text-text-primary font-medium hover:bg-surface-subtle"
+          className="w-full h-11 rounded-xl border border-border bg-surface text-text-primary font-medium hover:bg-surface-container-low transition shadow-xs"
         >
-          Batal
+          Batalkan Scan
         </button>
       </div>
 
+      {/* State Processing: Loading Geolocation & API */}
       {step === 'processing' && (
-        <div className="bg-surface border border-border rounded-xl p-space-lg text-center space-y-space-md">
+        <div className="bg-surface border border-border rounded-2xl p-12 text-center space-y-4 shadow-xs">
           <span className="material-symbols-outlined animate-spin text-primary-container text-[40px]">sync</span>
-          <p className="text-body-md text-text-secondary">Memeriksa lokasi dan memproses absensi...</p>
+          <div>
+            <p className="text-headline-sm font-semibold text-text-primary">Memverifikasi Lokasi GPS</p>
+            <p className="text-body-sm text-text-secondary mt-1">Mohon tunggu, sistem sedang mencocokkan koordinat radius sekolah...</p>
+          </div>
         </div>
       )}
 
+      {/* State Result: Hasil Berhasil / Gagal */}
       {step === 'result' && result && (
         <div
-          className={`rounded-xl p-space-lg text-center space-y-space-sm border ${
-            result.success ? 'bg-status-hadir/5 border-status-hadir/30' : 'bg-status-alpa/5 border-status-alpa/30'
+          className={`rounded-2xl p-6 text-center space-y-4 border shadow-xs ${
+            result.success ? 'bg-emerald-50/5 border-emerald-200' : 'bg-red-50/5 border-red-200'
           }`}
         >
-          <span
-            className={`material-symbols-outlined text-[48px] ${
-              result.success ? 'text-status-hadir' : 'text-status-alpa'
-            }`}
-          >
-            {result.success ? 'check_circle' : 'error'}
-          </span>
-          <p className={`text-headline-sm font-bold ${result.success ? 'text-status-hadir' : 'text-status-alpa'}`}>
-            {result.success ? 'Absensi Berhasil!' : 'Absensi Ditolak'}
-          </p>
-          <p className="text-body-md text-text-primary">{result.message}</p>
+          <div className={`w-16 h-16 rounded-full flex items-center justify-center mx-auto shadow-xs ${
+            result.success ? 'bg-emerald-100 text-emerald-700' : 'bg-red-100 text-red-700'
+          }`}>
+            <span className="material-symbols-outlined text-[32px]">
+              {result.success ? 'check_circle' : 'error'}
+            </span>
+          </div>
+
+          <div>
+            <h2 className={`text-headline-sm font-bold ${result.success ? 'text-emerald-700' : 'text-red-700'}`}>
+              {result.success ? 'Presensi Masuk Berhasil!' : 'Presensi Ditolak'}
+            </h2>
+            <p className="text-body-md text-text-primary mt-1 font-medium">{result.message}</p>
+          </div>
 
           {result.detail && (
-            <div className="bg-surface rounded-lg p-space-md text-left text-body-sm space-y-1 mt-space-sm">
-              <div className="flex justify-between">
+            <div className="bg-surface rounded-xl p-4 text-left text-body-sm space-y-2 border border-border/60">
+              <div className="flex justify-between items-center">
                 <span className="text-text-secondary">Jarak dari titik absensi</span>
-                <span className="font-semibold text-text-primary">{result.detail.distance_meters}m</span>
+                <span className="font-semibold font-tabular text-text-primary">{result.detail.distance_meters}m</span>
               </div>
-              <div className="flex justify-between">
-                <span className="text-text-secondary">Radius diizinkan</span>
-                <span className="font-semibold text-text-primary">{result.detail.radius_meters}m</span>
+              <div className="flex justify-between items-center">
+                <span className="text-text-secondary">Radius maksimal diizinkan</span>
+                <span className="font-semibold font-tabular text-text-primary">{result.detail.radius_meters}m</span>
               </div>
             </div>
           )}
 
           <button
             onClick={reset}
-            className="w-full h-11 mt-space-sm rounded-lg bg-primary-container text-on-primary font-semibold hover:bg-primary"
+            className="w-full h-11 rounded-xl bg-primary-container text-on-primary font-semibold hover:opacity-90 transition shadow-xs"
           >
-            {result.success ? 'Selesai' : 'Coba Lagi'}
+            {result.success ? 'Selesai' : 'Coba Scan Ulang'}
           </button>
         </div>
       )}

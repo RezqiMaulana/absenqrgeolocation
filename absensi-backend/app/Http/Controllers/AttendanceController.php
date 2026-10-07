@@ -290,6 +290,11 @@ class AttendanceController extends Controller
 
         $query = Attendance::where('student_id', $student->id)->orderByDesc('date');
 
+        if ($request->filled('month') && $request->filled('year')) {
+            $query->whereMonth('date', $request->month)
+            ->whereYear('date', $request->year);
+        }
+
         $this->applyDateRangeFilter($query, $request);
 
         return response()->json($query->paginate($request->integer('per_page', 15)));
