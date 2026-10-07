@@ -67,24 +67,32 @@ export default function AdminLaporan() {
   }
 
   return (
-    <div className="space-y-space-lg">
-      <div className="flex items-center justify-between flex-wrap gap-space-sm">
+    <div className="space-y-6 max-w-7xl mx-auto pb-20">
+      {/* Header Halaman */}
+      <div className="flex flex-col md:flex-row md:items-center justify-between gap-4 border-b border-border pb-5">
         <div>
-          <h1 className="text-headline-md font-bold text-text-primary">Laporan &amp; Rekapitulasi</h1>
-          <p className="text-body-md text-text-secondary">Rekap kehadiran siswa per periode.</p>
+          <div className="flex items-center gap-2 mb-1">
+            <span className="px-2.5 py-0.5 rounded-full text-xs font-semibold bg-primary-container/10 text-primary-container uppercase tracking-wider">
+              Analitik &amp; Laporan
+            </span>
+          </div>
+          <h1 className="text-headline-md font-bold text-text-primary">Laporan &amp; Rekapitulasi Presensi</h1>
+          <p className="text-body-md text-text-secondary mt-0.5">
+            Rekapitulasi kehadiran siswa secara menyeluruh berdasarkan rentang periode waktu dan kelas.
+          </p>
         </div>
-        <div className="flex gap-space-sm">
+        <div className="flex items-center gap-3 flex-wrap">
           <button
             onClick={() => window.print()}
-            className="h-10 px-space-md rounded-lg border border-border text-text-primary font-medium hover:bg-surface-subtle flex items-center gap-space-xs"
+            className="h-11 px-4 rounded-xl border border-border bg-surface text-text-primary font-medium hover:bg-surface-container-low flex items-center gap-2 transition shadow-xs"
           >
             <span className="material-symbols-outlined text-[18px]">print</span>
-            Print
+            Print Halaman
           </button>
           <button
             onClick={() => handleExport('excel')}
             disabled={exporting === 'excel'}
-            className="h-10 px-space-md rounded-lg border border-border text-text-primary font-medium hover:bg-surface-subtle flex items-center gap-space-xs disabled:opacity-60"
+            className="h-11 px-4 rounded-xl border border-border bg-surface text-text-primary font-medium hover:bg-surface-container-low flex items-center gap-2 disabled:opacity-60 transition shadow-xs"
           >
             <span className="material-symbols-outlined text-[18px]">download</span>
             {exporting === 'excel' ? 'Mengunduh...' : 'Export Excel'}
@@ -92,7 +100,7 @@ export default function AdminLaporan() {
           <button
             onClick={() => handleExport('pdf')}
             disabled={exporting === 'pdf'}
-            className="h-10 px-space-md rounded-lg bg-primary-container text-on-primary font-semibold hover:bg-primary flex items-center gap-space-xs disabled:opacity-60"
+            className="h-11 px-4 rounded-xl bg-primary-container text-on-primary font-semibold hover:opacity-90 flex items-center gap-2 disabled:opacity-60 transition shadow-xs"
           >
             <span className="material-symbols-outlined text-[18px]">picture_as_pdf</span>
             {exporting === 'pdf' ? 'Mengunduh...' : 'Export PDF'}
@@ -100,32 +108,35 @@ export default function AdminLaporan() {
         </div>
       </div>
 
-      <div className="bg-surface border border-border rounded-xl p-space-md">
-        <div className="flex flex-wrap gap-space-sm mb-space-md">
+      {/* Konten Card Utama */}
+      <div className="bg-surface border border-border rounded-2xl p-6 shadow-xs space-y-6">
+        
+        {/* Filter Bar Grid */}
+        <div className="grid grid-cols-1 sm:grid-cols-3 gap-4 bg-surface-container-low p-4 rounded-xl border border-border/60">
           <div>
-            <label className="block text-label-sm text-text-secondary mb-1">Dari Tanggal</label>
+            <label className="block text-label-md font-medium text-text-primary mb-1.5">Dari Tanggal</label>
             <input
               type="date"
               value={dateFrom}
               onChange={(e) => setDateFrom(e.target.value)}
-              className="h-10 px-space-md rounded-lg border border-border text-body-md focus:outline-none focus:ring-2 focus:ring-primary-container"
+              className="w-full h-11 px-4 rounded-xl border border-border bg-surface text-body-md focus:outline-none focus:ring-2 focus:ring-primary-container transition"
             />
           </div>
           <div>
-            <label className="block text-label-sm text-text-secondary mb-1">Sampai Tanggal</label>
+            <label className="block text-label-md font-medium text-text-primary mb-1.5">Sampai Tanggal</label>
             <input
               type="date"
               value={dateTo}
               onChange={(e) => setDateTo(e.target.value)}
-              className="h-10 px-space-md rounded-lg border border-border text-body-md focus:outline-none focus:ring-2 focus:ring-primary-container"
+              className="w-full h-11 px-4 rounded-xl border border-border bg-surface text-body-md focus:outline-none focus:ring-2 focus:ring-primary-container transition"
             />
           </div>
           <div>
-            <label className="block text-label-sm text-text-secondary mb-1">Kelas</label>
+            <label className="block text-label-md font-medium text-text-primary mb-1.5">Filter Kelas</label>
             <select
               value={classId}
               onChange={(e) => setClassId(e.target.value)}
-              className="h-10 px-space-md rounded-lg border border-border text-body-md focus:outline-none focus:ring-2 focus:ring-primary-container"
+              className="w-full h-11 px-4 rounded-xl border border-border bg-surface text-body-md focus:outline-none focus:ring-2 focus:ring-primary-container transition"
             >
               <option value="">Semua Kelas</option>
               {classes.map((c) => (
@@ -138,52 +149,71 @@ export default function AdminLaporan() {
         </div>
 
         {data && (
-          <p className="text-body-sm text-text-secondary mb-space-md">
-            Periode {data.date_from} s/d {data.date_to} • Estimasi hari efektif:{' '}
-            <strong>{data.effective_days} hari</strong> (dihitung dari tanggal yang punya minimal satu catatan
-            absensi di sistem, bukan kalender akademik resmi)
-          </p>
+          <div className="flex items-center gap-2 text-body-sm text-text-secondary px-1">
+            <span className="material-symbols-outlined text-[18px] text-primary-container">info</span>
+            <span>
+              Periode <strong className="text-text-primary">{data.date_from}</strong> s/d{' '}
+              <strong className="text-text-primary">{data.date_to}</strong> (Estimasi hari efektif:{' '}
+              <strong className="text-text-primary">{data.effective_days} hari</strong> tercatat sistem)
+            </span>
+          </div>
         )}
 
-        {error && <div className="bg-error-container text-on-error-container rounded-lg p-space-md mb-space-md">{error}</div>}
+        {error && (
+          <div className="bg-error-container text-on-error-container rounded-xl p-4 flex items-center gap-3">
+            <span className="material-symbols-outlined">error</span>
+            {error}
+          </div>
+        )}
 
-        <div className="overflow-x-auto">
-          <table className="w-full text-body-md">
-            <thead>
-              <tr className="text-left text-text-secondary border-b border-border">
-                <th className="p-space-sm">NIS</th>
-                <th className="p-space-sm">Nama</th>
-                <th className="p-space-sm">Kelas</th>
-                <th className="p-space-sm text-right">Hadir</th>
-                <th className="p-space-sm text-right">Terlambat</th>
-                <th className="p-space-sm text-right">Alpa</th>
-                <th className="p-space-sm text-right">Persentase</th>
+        {/* Tabel Rekapitulasi */}
+        <div className="overflow-x-auto rounded-xl border border-border">
+          <table className="w-full text-body-md text-left">
+            <thead className="bg-surface-container-low text-text-secondary border-b border-border text-xs uppercase tracking-wider font-semibold">
+              <tr>
+                <th className="p-4">NIS</th>
+                <th className="p-4">Nama Siswa</th>
+                <th className="p-4">Kelas</th>
+                <th className="p-4 text-right">Hadir</th>
+                <th className="p-4 text-right">Terlambat</th>
+                <th className="p-4 text-right">Alpa</th>
+                <th className="p-4 text-right">Persentase</th>
               </tr>
             </thead>
-            <tbody>
+            <tbody className="divide-y divide-border">
               {loading ? (
                 <tr>
-                  <td colSpan={7} className="p-space-lg text-center text-text-secondary">
-                    Memuat...
+                  <td colSpan={7} className="p-12 text-center text-text-secondary">
+                    <div className="flex flex-col items-center justify-center gap-2">
+                      <span className="material-symbols-outlined animate-spin text-primary-container text-[32px]">sync</span>
+                      <span>Memuat data rekapitulasi...</span>
+                    </div>
                   </td>
                 </tr>
               ) : !data || data.rows.length === 0 ? (
                 <tr>
-                  <td colSpan={7} className="p-space-lg text-center text-text-secondary">
-                    Tidak ada data siswa.
+                  <td colSpan={7} className="p-12 text-center text-text-secondary">
+                    <span className="material-symbols-outlined text-[36px] mb-1 opacity-40">assignment_turned_in</span>
+                    <p>Tidak ada data rekapitulasi siswa pada periode ini.</p>
                   </td>
                 </tr>
               ) : (
                 data.rows.map((r) => (
-                  <tr key={r.nis} className="border-b border-border hover:bg-surface-subtle">
-                    <td className="p-space-sm font-tabular">{r.nis}</td>
-                    <td className="p-space-sm font-medium text-text-primary">{r.name}</td>
-                    <td className="p-space-sm">{r.class}</td>
-                    <td className="p-space-sm text-right font-tabular text-status-hadir">{r.hadir}</td>
-                    <td className="p-space-sm text-right font-tabular text-status-terlambat">{r.terlambat}</td>
-                    <td className="p-space-sm text-right font-tabular text-status-alpa">{r.alpa}</td>
-                    <td className="p-space-sm text-right font-tabular font-semibold text-text-primary">
-                      {r.persentase}%
+                  <tr key={r.nis} className="hover:bg-surface-container-low/50 transition">
+                    <td className="p-4 font-tabular font-medium text-text-primary">{r.nis}</td>
+                    <td className="p-4 font-semibold text-text-primary">{r.name}</td>
+                    <td className="p-4">
+                      <span className="px-3 py-1 rounded-lg bg-surface-container text-text-primary text-xs font-medium border border-border/50">
+                        {r.class}
+                      </span>
+                    </td>
+                    <td className="p-4 text-right font-tabular font-semibold text-status-hadir">{r.hadir}</td>
+                    <td className="p-4 text-right font-tabular font-semibold text-status-terlambat">{r.terlambat}</td>
+                    <td className="p-4 text-right font-tabular font-semibold text-status-alpa">{r.alpa}</td>
+                    <td className="p-4 text-right font-tabular font-bold text-text-primary">
+                      <span className="px-2.5 py-1 rounded-lg bg-primary-container/10 text-primary-container text-sm">
+                        {r.persentase}%
+                      </span>
                     </td>
                   </tr>
                 ))
@@ -191,6 +221,7 @@ export default function AdminLaporan() {
             </tbody>
           </table>
         </div>
+
       </div>
     </div>
   );

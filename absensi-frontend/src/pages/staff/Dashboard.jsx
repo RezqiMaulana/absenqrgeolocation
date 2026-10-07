@@ -57,7 +57,8 @@ export default function StaffDashboard() {
 
   const hadirCount = rows.filter((a) => a.status === 'hadir').length;
   const terlambatCount = rows.filter((a) => a.status === 'terlambat').length;
-  const sudahAbsen = hadirCount + terlambatCount;
+  const izinSakitCount = rows.filter((a) => a.status === 'izin' || a.status === 'sakit').length;
+  const sudahAbsen = hadirCount + terlambatCount + izinSakitCount;
 
   const recentActivity = [...rows].sort((a, b) => (a.time < b.time ? 1 : -1)).slice(0, 8);
 
@@ -68,13 +69,14 @@ export default function StaffDashboard() {
           {isWaliKelas ? `Dashboard — ${myClasses.map((c) => c.name).join(', ')}` : 'Dashboard Monitoring Absensi'}
         </h1>
         <p className="text-body-md text-text-secondary">
-          {isWaliKelas ? 'Ringkasan presensi kelas yang kamu ampu hari ini.' : 'Ringkasan presensi seluruh siswa hari ini.'}
+          {isWaliKelas ? 'Ringkasan presensi kelas yang  di ampu.' : 'Ringkasan presensi seluruh siswa hari ini.'}
         </p>
       </div>
 
-      <div className="grid grid-cols-2 lg:grid-cols-3 gap-space-md">
+      <div className="grid grid-cols-2 lg:grid-cols-4 gap-space-md">
         <StatCard icon="check_circle" label="Hadir Tepat Waktu" value={hadirCount} accent />
         <StatCard icon="schedule" label="Terlambat" value={terlambatCount} />
+        <StatCard icon="medical_services" label="Izin & Sakit" value={izinSakitCount} />
         <StatCard icon="fact_check" label="Total Sudah Absen" value={sudahAbsen} />
       </div>
 

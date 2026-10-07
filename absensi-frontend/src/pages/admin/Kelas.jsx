@@ -64,24 +64,34 @@ export default function AdminKelas() {
   }
 
   return (
-    <div className="space-y-space-lg">
-      <div className="flex items-center justify-between flex-wrap gap-space-sm">
+    <div className="space-y-6 max-w-7xl mx-auto pb-20">
+      {/* Header Halaman */}
+      <div className="flex flex-col md:flex-row md:items-center justify-between gap-4 border-b border-border pb-5">
         <div>
-          <h1 className="text-headline-md font-bold text-text-primary">Kelola Kelas</h1>
-          <p className="text-body-md text-text-secondary">Data kelas dan wali kelasnya.</p>
+          <div className="flex items-center gap-2 mb-1">
+            <span className="px-2.5 py-0.5 rounded-full text-xs font-semibold bg-primary-container/10 text-primary-container uppercase tracking-wider">
+              Master Data Kelas
+            </span>
+          </div>
+          <h1 className="text-headline-md font-bold text-text-primary">Kelola Kelas &amp; Wali Kelas</h1>
+          <p className="text-body-md text-text-secondary mt-0.5">
+            Kelola data rombongan belajar, penugasan wali kelas, dan seksi absensi kelas.
+          </p>
         </div>
         <button
           onClick={openAdd}
-          className="h-10 px-space-md rounded-lg bg-primary-container text-on-primary font-semibold hover:bg-primary flex items-center gap-space-xs"
+          className="h-11 px-4 rounded-xl bg-primary-container text-on-primary font-semibold hover:opacity-90 flex items-center gap-2 transition shadow-xs"
         >
           <span className="material-symbols-outlined text-[18px]">add</span>
-          Tambah Kelas
+          Tambah Kelas Baru
         </button>
       </div>
 
-      <div className="bg-surface border border-border rounded-xl p-space-md">
-        <div className="relative mb-space-md max-w-sm">
-          <span className="material-symbols-outlined absolute left-3 top-1/2 -translate-y-1/2 text-text-secondary text-[18px]">
+      {/* Konten Card Utama */}
+      <div className="bg-surface border border-border rounded-2xl p-6 shadow-xs space-y-5">
+        {/* Search Bar */}
+        <div className="relative w-full sm:w-80">
+          <span className="material-symbols-outlined absolute left-3.5 top-1/2 -translate-y-1/2 text-text-secondary text-[20px]">
             search
           </span>
           <input
@@ -92,51 +102,68 @@ export default function AdminKelas() {
               setSearch(e.target.value);
             }}
             placeholder="Cari nama kelas..."
-            className="w-full h-10 pl-9 pr-space-md rounded-lg border border-border text-body-md focus:outline-none focus:ring-2 focus:ring-primary-container"
+            className="w-full h-11 pl-10 pr-4 rounded-xl border border-border bg-surface text-body-md focus:outline-none focus:ring-2 focus:ring-primary-container transition"
           />
         </div>
 
-        {error && <div className="bg-error-container text-on-error-container rounded-lg p-space-md mb-space-md">{error}</div>}
+        {error && (
+          <div className="bg-error-container text-on-error-container rounded-xl p-4 flex items-center gap-3">
+            <span className="material-symbols-outlined">error</span>
+            {error}
+          </div>
+        )}
 
-        <div className="overflow-x-auto">
-          <table className="w-full text-body-md">
-            <thead>
-              <tr className="text-left text-text-secondary border-b border-border">
-                <th className="p-space-sm">Nama Kelas</th>
-                <th className="p-space-sm">Wali Kelas</th>
-                <th className="p-space-sm">Seksi Absensi</th>
-                <th className="p-space-sm">Jumlah Siswa</th>
-                <th className="p-space-sm text-right">Aksi</th>
+        {/* Tabel Kelas */}
+        <div className="overflow-x-auto rounded-xl border border-border">
+          <table className="w-full text-body-md text-left">
+            <thead className="bg-surface-container-low text-text-secondary border-b border-border text-xs uppercase tracking-wider font-semibold">
+              <tr>
+                <th className="p-4">Nama Kelas</th>
+                <th className="p-4">Wali Kelas</th>
+                <th className="p-4">Seksi Absensi</th>
+                <th className="p-4">Jumlah Siswa</th>
+                <th className="p-4 text-right">Aksi</th>
               </tr>
             </thead>
-            <tbody>
+            <tbody className="divide-y divide-border">
               {loading ? (
                 <tr>
-                  <td colSpan={5} className="p-space-lg text-center text-text-secondary">
-                    Memuat...
+                  <td colSpan={5} className="p-12 text-center text-text-secondary">
+                    <div className="flex flex-col items-center justify-center gap-2">
+                      <span className="material-symbols-outlined animate-spin text-primary-container text-[32px]">sync</span>
+                      <span>Memuat data kelas...</span>
+                    </div>
                   </td>
                 </tr>
               ) : classes.length === 0 ? (
                 <tr>
-                  <td colSpan={5} className="p-space-lg text-center text-text-secondary">
-                    Tidak ada data kelas.
+                  <td colSpan={5} className="p-12 text-center text-text-secondary">
+                    <span className="material-symbols-outlined text-[36px] mb-1 opacity-40">class</span>
+                    <p>Tidak ada data kelas ditemukan.</p>
                   </td>
                 </tr>
               ) : (
                 classes.map((c) => (
-                  <tr key={c.id} className="border-b border-border hover:bg-surface-subtle">
-                    <td className="p-space-sm font-medium text-text-primary">{c.name}</td>
-                    <td className="p-space-sm">{c.wali_kelas?.name || '-'}</td>
-                    <td className="p-space-sm">{c.seksi_absensi?.name || '-'}</td>
-                    <td className="p-space-sm font-tabular">{c.students_count ?? '-'}</td>
-                    <td className="p-space-sm text-right">
+                  <tr key={c.id} className="hover:bg-surface-container-low/50 transition">
+                    <td className="p-4 font-semibold text-text-primary">{c.name}</td>
+                    <td className="p-4 text-text-secondary">{c.wali_kelas?.name || '-'}</td>
+                    <td className="p-4 text-text-secondary">{c.seksi_absensi?.name || '-'}</td>
+                    <td className="p-4">
+                      <span className="px-3 py-1 rounded-lg bg-surface-container text-text-primary text-xs font-semibold font-tabular border border-border/50">
+                        {c.students_count ?? 0} Siswa
+                      </span>
+                    </td>
+                    <td className="p-4 text-right space-x-2">
                       <button
                         onClick={() => openEdit(c)}
-                        className="text-primary-container hover:underline text-body-sm mr-space-sm"
+                        className="px-3 py-1.5 rounded-lg text-primary-container hover:bg-primary-container/10 font-medium text-sm transition"
                       >
                         Edit
                       </button>
-                      <button onClick={() => handleDelete(c)} className="text-status-alpa hover:underline text-body-sm">
+                      <button
+                        onClick={() => handleDelete(c)}
+                        className="px-3 py-1.5 rounded-lg text-error hover:bg-error/10 font-medium text-sm transition"
+                      >
                         Hapus
                       </button>
                     </td>
@@ -147,24 +174,29 @@ export default function AdminKelas() {
           </table>
         </div>
 
-        <div className="flex items-center justify-between mt-space-md text-body-sm text-text-secondary">
-          <span>
-            Halaman {meta.current_page} dari {meta.last_page} • Total {meta.total} kelas
-          </span>
-          <div className="flex gap-space-xs">
+        {/* Paginasi Bawah */}
+        <div className="flex flex-col sm:flex-row items-center justify-between gap-4 pt-2 text-body-sm text-text-secondary">
+          <p>
+            Menampilkan halaman <span className="font-semibold text-text-primary">{meta.current_page}</span> dari{' '}
+            <span className="font-semibold text-text-primary">{meta.last_page}</span> (Total{' '}
+            <span className="font-semibold text-text-primary">{meta.total}</span> kelas)
+          </p>
+          <div className="flex items-center gap-2">
             <button
               disabled={page <= 1}
               onClick={() => setPage((p) => p - 1)}
-              className="px-space-sm py-1 rounded border border-border disabled:opacity-40"
+              className="h-9 px-4 rounded-xl border border-border font-medium hover:bg-surface-container-low disabled:opacity-40 transition flex items-center gap-1"
             >
+              <span className="material-symbols-outlined text-[16px]">chevron_left</span>
               Sebelumnya
             </button>
             <button
               disabled={page >= meta.last_page}
               onClick={() => setPage((p) => p + 1)}
-              className="px-space-sm py-1 rounded border border-border disabled:opacity-40"
+              className="h-9 px-4 rounded-xl border border-border font-medium hover:bg-surface-container-low disabled:opacity-40 transition flex items-center gap-1"
             >
               Berikutnya
+              <span className="material-symbols-outlined text-[16px]">chevron_right</span>
             </button>
           </div>
         </div>
