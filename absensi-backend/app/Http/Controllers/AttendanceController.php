@@ -138,107 +138,142 @@ class AttendanceController extends Controller
 
     public function classDailyMonitoring(Request $request)
     {
-    $user = $request->user();
-    
-    if ($user->role !== 'wali_kelas') {
-        return response()->json(['message' => 'Unauthorized'], 403);
-    }
+        $user = $request->user();
+        
+        // 1. Izinkan wali_kelas DAN seksi_absensi
+        $isWali = $user->role === 'wali_kelas';
+        $isSeksi = $user->role === 'siswa' && $user->student && $user->student->classAsSeksiAbsensi;
 
-    $date = $request->get('date', now()->format('Y-m-d'));
-    $search = $request->get('search');
-    $statusFilter = $request->get('status');
+        if (!$isWali && !$isSeksi) {
+            return response()->json(['message' => 'Unauthorized'], 403);
+        }
 
-    // PERIKSA NAMA KOLOM INI: Ubah 'class_id' menjadi 'school_class_id' jika struktur database Anda menggunakan itu
-    $query = Student::where('class_id', $user->class_id); 
-    // Contoh jika menggunakan school_class_id:
-    // $query = Student::where('school_class_id', $user->class_id);
+        $classIds = [];
 
-    if ($search) {
-        $query->where(function($q) use ($search) {
-            $q->where('name', 'like', "%{$search}%")
-              ->orWhere('nis', 'like', "%{$search}%");
+        // 2. Ambil ID Kelas berdasarkan role
+        if ($isWali) {
+            $teacher = $user->teacher;
+            if (!$teacher) return response()->json(['message' => 'Akun tidak terhubung ke data guru.'], 422);
+            $classIds = $teacher->classesAsWali()->pluck('id')->toArray();
+        } elseif ($isSeksi) {
+            $classIds = [$user->student->classAsSeksiAbsensi->id];
+        }
+
+        $date = $request->get('date', now()->format('Y-m-d'));
+        $search = $request->get('search');
+        $statusFilter = $request->get('status');
+
+        $query = Student::whereIn('class_id', $classIds);
+
+        if ($search) {
+            $query->where(function($q) use ($search) {
+                $q->where('name', 'like', "%{$search}%")
+                  ->orWhere('nis', 'like', "%{$search}%");
+            });
+        }
+
+        $date = $request->get('date', now()->format('Y-m-d'));
+        $search = $request->get('search');
+        $statusFilter = $request->get('status');
+
+        $query = Student::whereIn('class_id', $classIds);
+
+        if ($search) {
+            $query->where(function($q) use ($search) {
+                $q->where('name', 'like', "%{$search}%")
+                  ->orWhere('nis', 'like', "%{$search}%");
+            });
+        }
+
+        $perPage = $request->input('per_page', 15);
+        $students = $query->paginate($perPage);
+
+        $students->getCollection()->transform(function ($student) use ($date, $statusFilter) {
+            $attendance = Attendance::where('student_id', $student->id)
+                ->whereDate('date', $date)
+                ->first();
+
+            return [
+                'student_id' => $student->id,
+                'nis' => $student->nis,
+                'name' => $student->name,
+                'time' => $attendance ? $attendance->time : null,
+                'distance_meters' => $attendance ? $attendance->distance_meters : null,
+                'status' => $attendance ? $attendance->status : 'alpa',
+            ];
         });
-    }
 
-    $students = $query->paginate(15);
+        if ($statusFilter) {
+            $filteredCollection = $students->getCollection()->filter(function ($item) use ($statusFilter) {
+                return $item['status'] === $statusFilter;
+            });
+            $students->setCollection($filteredCollection);
+        }
 
-    $students->getCollection()->transform(function ($student) use ($date, $statusFilter) {
-        $attendance = Attendance::where('student_id', $student->id)
-            ->whereDate('date', $date)
-            ->first();
-
-        return [
-            'student_id' => $student->id,
-            'nis' => $student->nis,
-            'name' => $student->name,
-            'time' => $attendance ? $attendance->time : null,
-            'distance_meters' => $attendance ? $attendance->distance_meters : null,
-            'status' => $attendance ? $attendance->status : 'alpa',
-        ];
-    });
-
-    if ($statusFilter) {
-        $filteredCollection = $students->getCollection()->filter(function ($item) use ($statusFilter) {
-            return $item['status'] === $statusFilter;
-        });
-        $students->setCollection($filteredCollection);
-    }
-
-    return response()->json($students);
+        return response()->json($students);
     }
 
     public function storePermission(Request $request)
     {
-    $user = $request->user();
+        $user = $request->user();
 
-    // Validasi ketat: Hanya izinkan jika rolenya wali_kelas atau seksi_absensi (dan admin jika diperlukan)
-    if (!in_array($user->role, ['wali_kelas', 'seksi_absensi', 'admin'])) {
-        return response()->json([
-            'message' => 'Akses ditolak. Hanya Wali Kelas dan Seksi Absensi yang dapat menginput izin atau sakit.'
-        ], 403);
-    }
+        $isWali = $user->role === 'wali_kelas';
+        $isSeksi = $user->role === 'siswa' && $user->student && $user->student->classAsSeksiAbsensi;
+        $isAdmin = $user->role === 'admin';
 
-    $request->validate([
-        'student_id' => 'required|exists:students,id',
-        'status'     => 'required|in:izin,sakit',
-        'date'       => 'required|date',
-        'note'       => 'nullable|string|max:255', 
-    ]);
+        if (!$isWali && !$isSeksi && !$isAdmin) {
+            return response()->json([
+                'message' => 'Akses ditolak. Hanya Wali Kelas dan Seksi Absensi yang dapat menginput izin atau sakit.'
+            ], 403);
+        }
 
-    // Jika yang login adalah Wali Kelas, kita bisa batasi agar dia hanya bisa menginput 
-    // siswa yang berada di kelas binaannya (opsional tapi sangat direkomendasikan)
-    $student = Student::findOrFail($request->student_id);
-    if ($user->role === 'wali_kelas' && $user->class_id !== $student->class_id) {
-        return response()->json([
-            'message' => 'Anda hanya dapat menginput izin/sakit untuk siswa di kelas Anda.'
-        ], 403);
-    }
-
-    // Proses simpan atau update data absensi
-    $existingAttendance = Attendance::where('student_id', $request->student_id)
-        ->whereDate('date', $request->date)
-        ->first();
-
-    if ($existingAttendance) {
-        $existingAttendance->update([
-            'status' => $request->status,
-            'time'   => now()->format('H:i:s'),
+        $request->validate([
+            'student_id' => 'required|exists:students,id',
+            'status'     => 'required|in:izin,sakit',
+            'date'       => 'required|date',
+            'note'       => 'nullable|string|max:255', 
         ]);
-    } else {
-        Attendance::create([
-            'student_id' => $request->student_id,
-            'date'       => $request->date,
-            'time'       => now()->format('H:i:s'),
-            'status'     => $request->status, 
-            'latitude'   => null,
-            'longitude'  => null,
-            'distance_meters' => null,
-        ]);
-    }
 
-    return response()->json([
-        'message' => 'Status izin/sakit siswa berhasil dicatat.',
-    ], 200);
+        $student = Student::findOrFail($request->student_id);
+
+        if ($isWali) {
+            $teacher = $user->teacher;
+            $classIds = $teacher->classesAsWali()->pluck('id')->toArray();
+            if (!in_array($student->class_id, $classIds)) {
+                return response()->json(['message' => 'Anda hanya dapat menginput izin/sakit untuk siswa di kelas Anda.'], 403);
+            }
+        } elseif ($isSeksi) {
+            $seksiClassId = $user->student->classAsSeksiAbsensi->id;
+            if ($student->class_id !== $seksiClassId) {
+                return response()->json(['message' => 'Anda hanya dapat menginput izin/sakit untuk siswa di kelas Anda sendiri.'], 403);
+            }
+        }
+
+        // Proses simpan atau update data absensi
+        $existingAttendance = Attendance::where('student_id', $request->student_id)
+            ->whereDate('date', $request->date)
+            ->first();
+
+        if ($existingAttendance) {
+            $existingAttendance->update([
+                'status' => $request->status,
+                'time'   => now()->format('H:i:s'),
+            ]);
+        } else {
+            Attendance::create([
+                'student_id' => $request->student_id,
+                'date'       => $request->date,
+                'time'       => now()->format('H:i:s'),
+                'status'     => $request->status, 
+                'latitude'   => 0,
+                'longitude'  => 0,
+                'distance_meters' => 0,
+            ]);
+        }
+
+        return response()->json([
+            'message' => 'Status izin/sakit siswa berhasil dicatat.',
+        ], 200);
     }
 
     /**

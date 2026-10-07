@@ -32,7 +32,7 @@ Route::middleware('auth:sanctum')->group(function () {
     // QR ATTENDANCE
     // ----------------------------------------
     Route::post('/attendance/permission', [AttendanceController::class, 'storePermission'])
-         ->middleware('role:wali_kelas,seksi_absensi');
+         ->middleware('role:wali_kelas,siswa');
     Route::get('/attendance/class-daily-monitoring', [AttendanceController::class, 'classDailyMonitoring']);
     Route::middleware('role:admin')->get('/qr/token', [AttendanceController::class, 'qrToken']);
     Route::middleware('role:admin')->get('/attendance/weekly-stats', [AttendanceController::class, 'weeklyStats']);
