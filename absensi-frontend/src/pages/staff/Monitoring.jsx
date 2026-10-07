@@ -11,7 +11,6 @@ export default function StaffMonitoring() {
   const [meta, setMeta] = useState({ current_page: 1, last_page: 1, total: 0 });
   const [search, setSearch] = useState('');
   const [status, setStatus] = useState('');
-  // Menggunakan satu tanggal untuk memudahkan input presensi/rekap harian
   const [date, setDate] = useState(new Date().toISOString().slice(0, 10));
   const [page, setPage] = useState(1);
   const [loading, setLoading] = useState(true);
@@ -27,15 +26,15 @@ export default function StaffMonitoring() {
         params: {
           search: search || undefined,
           status: status || undefined,
-          date: date || undefined, // Gunakan parameter date tunggal
+          date: date || undefined,
           page,
         },
       });
-      setRows(res.data.data || res.data); // Sesuaikan jika data langsung berupa array
+      setRows(res.data.data || res.data);
       setMeta({ 
         current_page: res.data.current_page || 1, 
         last_page: res.data.last_page || 1, 
-        total: res.data.total || res.data.length 
+        total: res.data.total || (res.data.length ? res.data.length : 0)
       });
     } catch (err) {
       setError(err.response?.data?.message || 'Gagal memuat data monitoring.');
@@ -66,20 +65,31 @@ export default function StaffMonitoring() {
   };
 
   return (
-    <div className="space-y-space-lg">
-      <div>
-        <h1 className="text-headline-md font-bold text-text-primary">
-          {isWaliKelas ? 'Monitoring & Input Presensi Kelas' : 'Monitoring Kehadiran'}
-        </h1>
-        <p className="text-body-md text-text-secondary">
-          {isWaliKelas ? 'Kelola kehadiran dan input izin/sakit siswa di kelas Anda.' : 'Log presensi seluruh siswa.'}
-        </p>
+    <div className="space-y-6 max-w-7xl mx-auto pb-20">
+      {/* Header Halaman */}
+      <div className="flex flex-col md:flex-row md:items-center justify-between gap-4 border-b border-border pb-5">
+        <div>
+          <div className="flex items-center gap-2 mb-1">
+            <span className="px-2.5 py-0.5 rounded-full text-xs font-semibold bg-primary-container/10 text-primary-container uppercase tracking-wider">
+              {isWaliKelas ? 'Portal Wali Kelas' : 'Monitoring Staff'}
+            </span>
+          </div>
+          <h1 className="text-headline-md font-bold text-text-primary">
+            {isWaliKelas ? 'Monitoring & Input Presensi Kelas' : 'Monitoring Kehadiran Siswa'}
+          </h1>
+          <p className="text-body-md text-text-secondary mt-0.5">
+            {isWaliKelas ? 'Kelola kehadiran dan input manual izin atau sakit siswa di kelas binaan Anda.' : 'Log rekam jejak presensi seluruh siswa di sekolah.'}
+          </p>
+        </div>
       </div>
 
-      <div className="bg-surface border border-border rounded-xl p-space-md">
-        <div className="flex flex-wrap gap-space-sm mb-space-md">
-          <div className="relative flex-1 min-w-[180px]">
-            <span className="material-symbols-outlined absolute left-3 top-1/2 -translate-y-1/2 text-text-secondary text-[18px]">
+      {/* Konten Card Utama */}
+      <div className="bg-surface border border-border rounded-2xl p-6 shadow-xs space-y-5">
+        
+        {/* Filter Bar Grid */}
+        <div className="grid grid-cols-1 sm:grid-cols-3 gap-4">
+          <div className="relative">
+            <span className="material-symbols-outlined absolute left-3.5 top-1/2 -translate-y-1/2 text-text-secondary text-[20px]">
               search
             </span>
             <input
@@ -89,25 +99,27 @@ export default function StaffMonitoring() {
                 setPage(1);
                 setSearch(e.target.value);
               }}
-              placeholder="Cari nama atau NIS..."
-              className="w-full h-10 pl-9 pr-space-md rounded-lg border border-border text-body-md focus:outline-none focus:ring-2 focus:ring-primary-container"
+              placeholder="Cari nama atau NIS siswa..."
+              className="w-full h-11 pl-10 pr-4 rounded-xl border border-border bg-surface text-body-md focus:outline-none focus:ring-2 focus:ring-primary-container transition"
             />
           </div>
+
           <select
             value={status}
             onChange={(e) => {
               setPage(1);
               setStatus(e.target.value);
             }}
-            className="h-10 px-space-md rounded-lg border border-border text-body-md focus:outline-none focus:ring-2 focus:ring-primary-container"
+            className="w-full h-11 px-4 rounded-xl border border-border bg-surface text-body-md focus:outline-none focus:ring-2 focus:ring-primary-container transition"
           >
-            <option value="">Semua Status</option>
+            <option value="">Semua Status Kehadiran</option>
             <option value="hadir">Tepat Waktu</option>
             <option value="terlambat">Terlambat</option>
             <option value="izin">Izin</option>
             <option value="sakit">Sakit</option>
             {isWaliKelas && <option value="alpa">Alpa / Belum Absen</option>}
           </select>
+
           <input
             type="date"
             value={date}
@@ -115,39 +127,48 @@ export default function StaffMonitoring() {
               setPage(1);
               setDate(e.target.value);
             }}
-            className="h-10 px-space-md rounded-lg border border-border text-body-md focus:outline-none focus:ring-2 focus:ring-primary-container"
+            className="w-full h-11 px-4 rounded-xl border border-border bg-surface text-body-md focus:outline-none focus:ring-2 focus:ring-primary-container transition"
           />
         </div>
 
-        {error && <div className="bg-error-container text-on-error-container rounded-lg p-space-md mb-space-md">{error}</div>}
+        {error && (
+          <div className="bg-error-container text-on-error-container rounded-xl p-4 flex items-center gap-3">
+            <span className="material-symbols-outlined">error</span>
+            {error}
+          </div>
+        )}
 
-        <div className="overflow-x-auto">
-          <table className="w-full text-body-md">
-            <thead>
-              <tr className="text-left text-text-secondary border-b border-border">
-                <th className="p-space-sm">NIS</th>
-                <th className="p-space-sm">Nama</th>
-                <th className="p-space-sm">Jam</th>
-                <th className="p-space-sm">Jarak</th>
-                <th className="p-space-sm">Status</th>
+        {/* Tabel Monitoring */}
+        <div className="overflow-x-auto rounded-xl border border-border">
+          <table className="w-full text-body-md text-left">
+            <thead className="bg-surface-container-low text-text-secondary border-b border-border text-xs uppercase tracking-wider font-semibold">
+              <tr>
+                <th className="p-4">NIS</th>
+                <th className="p-4">Nama Siswa</th>
+                <th className="p-4">Jam Absen</th>
+                <th className="p-4">Jarak GPS</th>
+                <th className="p-4">Status / Aksi Input</th>
               </tr>
             </thead>
-            <tbody>
+            <tbody className="divide-y divide-border">
               {loading ? (
                 <tr>
-                  <td colSpan={5} className="p-space-lg text-center text-text-secondary">
-                    Memuat...
+                  <td colSpan={5} className="p-12 text-center text-text-secondary">
+                    <div className="flex flex-col items-center justify-center gap-2">
+                      <span className="material-symbols-outlined animate-spin text-primary-container text-[32px]">sync</span>
+                      <span>Memuat data monitoring...</span>
+                    </div>
                   </td>
                 </tr>
               ) : rows.length === 0 ? (
                 <tr>
-                  <td colSpan={5} className="p-space-lg text-center text-text-secondary">
-                    Tidak ada data ditemukan.
+                  <td colSpan={5} className="p-12 text-center text-text-secondary">
+                    <span className="material-symbols-outlined text-[36px] mb-1 opacity-40">fact_check</span>
+                    <p>Tidak ada data monitoring ditemukan pada tanggal ini.</p>
                   </td>
                 </tr>
               ) : (
                 rows.map((r) => {
-                  // Mengakomodasi API Wali Kelas (r.name) dan API Admin (r.student.name)
                   const studentName = r.name || r.student?.name;
                   const studentNis = r.nis || r.student?.nis;
                   const studentId = r.student_id || r.student?.id;
@@ -155,29 +176,29 @@ export default function StaffMonitoring() {
                   const isLocked = r.status === 'hadir' || r.status === 'terlambat';
 
                   return (
-                    <tr key={studentId || r.id} className="border-b border-border hover:bg-surface-subtle">
-                      <td className="p-space-sm font-tabular">{studentNis}</td>
-                      <td className="p-space-sm font-medium text-text-primary">{studentName}</td>
-                      <td className="p-space-sm font-tabular">{r.time?.slice(0, 5) || '-'}</td>
-                      <td className="p-space-sm text-text-secondary">
+                    <tr key={studentId || r.id} className="hover:bg-surface-container-low/50 transition">
+                      <td className="p-4 font-tabular font-medium text-text-primary">{studentNis}</td>
+                      <td className="p-4 font-semibold text-text-primary">{studentName}</td>
+                      <td className="p-4 font-tabular text-text-secondary">{r.time?.slice(0, 5) || '-'}</td>
+                      <td className="p-4 font-tabular text-text-secondary">
                         {r.distance_meters ? `${Number(r.distance_meters).toFixed(0)}m` : '-'}
                       </td>
-                      <td className="p-space-sm">
+                      <td className="p-4">
                         {isWaliKelas && !isLocked ? (
                           <select
                             value={r.status || 'alpa'}
                             disabled={savingId === studentId}
                             onChange={(e) => handleStatusChange(studentId, e.target.value)}
-                            className="px-2 py-1 rounded border border-border text-sm bg-white focus:ring-2 focus:ring-primary-container disabled:opacity-50"
+                            className="h-9 px-3 rounded-xl border border-border text-sm bg-surface font-medium focus:ring-2 focus:ring-primary-container disabled:opacity-50 transition"
                           >
-                            <option value="alpa">Belum Absen</option>
+                            <option value="alpa">Belum Absen / Alpa</option>
                             <option value="izin">Izin</option>
                             <option value="sakit">Sakit</option>
                           </select>
                         ) : (
-                          <div className="flex items-center gap-2">
+                          <div className="flex items-center gap-2.5">
                             <StatusBadge status={r.status} />
-                            {isWaliKelas && <span className="text-xs text-gray-400 italic">(Terkunci)</span>}
+                            {isWaliKelas && <span className="text-xs text-text-secondary italic">(Terkunci otomatis)</span>}
                           </div>
                         )}
                       </td>
@@ -189,27 +210,33 @@ export default function StaffMonitoring() {
           </table>
         </div>
 
-        <div className="flex items-center justify-between mt-space-md text-body-sm text-text-secondary">
-          <span>
-            Halaman {meta.current_page} dari {meta.last_page} | Total {meta.total} data
-          </span>
-          <div className="flex gap-space-xs">
+        {/* Paginasi Bawah */}
+        <div className="flex flex-col sm:flex-row items-center justify-between gap-4 pt-2 text-body-sm text-text-secondary">
+          <p>
+            Menampilkan halaman <span className="font-semibold text-text-primary">{meta.current_page}</span> dari{' '}
+            <span className="font-semibold text-text-primary">{meta.last_page}</span> (Total{' '}
+            <span className="font-semibold text-text-primary">{meta.total}</span> data)
+          </p>
+          <div className="flex items-center gap-2">
             <button
               disabled={page <= 1}
               onClick={() => setPage((p) => p - 1)}
-              className="px-space-sm py-1 rounded border border-border disabled:opacity-40"
+              className="h-9 px-4 rounded-xl border border-border font-medium hover:bg-surface-container-low disabled:opacity-40 transition flex items-center gap-1"
             >
+              <span className="material-symbols-outlined text-[16px]">chevron_left</span>
               Sebelumnya
             </button>
             <button
               disabled={page >= meta.last_page}
               onClick={() => setPage((p) => p + 1)}
-              className="px-space-sm py-1 rounded border border-border disabled:opacity-40"
+              className="h-9 px-4 rounded-xl border border-border font-medium hover:bg-surface-container-low disabled:opacity-40 transition flex items-center gap-1"
             >
               Berikutnya
+              <span className="material-symbols-outlined text-[16px]">chevron_right</span>
             </button>
           </div>
         </div>
+
       </div>
     </div>
   );
