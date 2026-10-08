@@ -2,6 +2,8 @@ import { useState } from 'react';
 import { useNavigate, useLocation } from 'react-router-dom';
 import { useAuth } from '../context/AuthContext';
 import ServerClock from '../components/ServerClock';
+import bgImage from '../assets/backgroundNesas.jpg';
+import logoImage from '../assets/nesas.png';
 
 const ROLE_HOME = {
   admin: '/admin/dashboard',
@@ -47,7 +49,7 @@ export default function Login() {
       <div className="relative hidden lg:flex lg:w-1/2 flex-col justify-between p-margin-desktop overflow-hidden bg-primary-container text-on-primary select-none">
 
         <img 
-        src="../assets/backgroundNesas.jpg"
+        src="bgImage"
         alt="Background Sekolah" 
         className="absolute inset-0 w-full h-full object-cover z-0" 
         />
@@ -57,7 +59,7 @@ export default function Login() {
         <div className="relative z-20 flex items-center justify-between">
           <div className="flex items-center space-x-space-sm bg-surface/10 backdrop-blur-md px-space-md py-space-xs rounded-full">
             <div className="w-8 h-8 rounded-full bg-surface/20 flex items-center justify-center font-bold text-surface">
-              <img src="../assets/nesas.png" alt="Logo" className="w-5 h-5" />
+              <img src="logoImage" alt="Logo" className="w-5 h-5" />
             </div>
             <div className="flex flex-col">
               <span className="text-headline-sm text-surface font-bold leading-none">NESAS</span>
@@ -139,7 +141,7 @@ export default function Login() {
         <div className="w-full max-w-md bg-surface rounded-xl p-space-md sm:p-space-lg shadow-sm">
           <div className="flex flex-col items-center text-center mb-space-lg">
             <div className="w-16 h-16 mb-space-sm flex items-center justify-center rounded-full bg-primary-container text-on-primary text-headline-lg font-bold">
-              <img src="../assets/nesas.png" alt="Logo" className="w-8 h-10" />
+              <img src="logoImage" alt="Logo" className="w-8 h-10" />
             </div>
             <h2 className="text-headline-md font-bold text-text-primary">Masuk Akun Presensi</h2>
             <p className="text-body-md text-text-secondary mt-1">
