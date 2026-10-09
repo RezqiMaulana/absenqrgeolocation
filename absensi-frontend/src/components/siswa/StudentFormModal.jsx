@@ -2,7 +2,16 @@ import { useEffect, useState } from 'react';
 import Modal from '../Modal';
 import api from '../../lib/api';
 
-const emptyForm = { nis: '', name: '', gender: '', class_id: '', email: '', password: '' };
+const emptyForm = {
+  nis: '',
+  name: '',
+  gender: '',
+  class_id: '',
+  email: '',
+  password: '',
+  parent_phone: '',
+  student_phone: '',
+};
 
 export default function StudentFormModal({ open, onClose, onSaved, classes, student }) {
   const [form, setForm] = useState(emptyForm);
@@ -20,6 +29,8 @@ export default function StudentFormModal({ open, onClose, onSaved, classes, stud
         class_id: student.class_id || '',
         email: '',
         password: '',
+        parent_phone: student.parent_phone || '',
+        student_phone: student.student_phone || '',
       });
     } else {
       setForm(emptyForm);
@@ -43,6 +54,8 @@ export default function StudentFormModal({ open, onClose, onSaved, classes, stud
           name: form.name,
           gender: form.gender || null,
           class_id: form.class_id || null,
+          parent_phone: form.parent_phone || null,
+          student_phone: form.student_phone || null,
         });
       } else {
         await api.post('/students', {
@@ -52,6 +65,8 @@ export default function StudentFormModal({ open, onClose, onSaved, classes, stud
           class_id: form.class_id || null,
           email: form.email,
           password: form.password || undefined,
+          parent_phone: form.parent_phone || null,
+          student_phone: form.student_phone || null,
         });
       }
       onSaved();
@@ -128,6 +143,37 @@ export default function StudentFormModal({ open, onClose, onSaved, classes, stud
             />
           </>
         )}
+
+        {/* ── Nomor HP untuk notifikasi WhatsApp ── */}
+        <div className="border-t border-border pt-space-md">
+          <div className="flex items-center gap-2 mb-1">
+            <span className="text-lg">📱</span>
+            <p className="text-label-md font-semibold text-text-primary">Nomor WhatsApp (Notifikasi Absensi)</p>
+          </div>
+          <p className="text-body-sm text-text-secondary mb-space-sm">
+            Format:{' '}
+            <span className="font-mono font-semibold bg-surface-container px-1.5 py-0.5 rounded">628xxxxxxxxx</span>
+            {' '}— tanpa angka 0 di depan, tanpa tanda +
+          </p>
+          <div className="space-y-space-sm">
+            <Field
+              label="No. HP Orang Tua / Wali"
+              name="parent_phone"
+              value={form.parent_phone}
+              onChange={handleChange}
+              error={errors.parent_phone}
+              placeholder="Contoh: 6281234567890"
+            />
+            <Field
+              label="No. HP Siswa (opsional)"
+              name="student_phone"
+              value={form.student_phone}
+              onChange={handleChange}
+              error={errors.student_phone}
+              placeholder="Contoh: 6289876543210"
+            />
+          </div>
+        </div>
 
         <div className="flex gap-space-sm pt-space-sm">
           <button

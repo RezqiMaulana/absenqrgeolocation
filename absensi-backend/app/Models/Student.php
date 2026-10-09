@@ -12,6 +12,8 @@ class Student extends Model
         'nis',
         'name',
         'gender',
+        'parent_phone',  // Nomor HP orang tua/wali (format: 628xxxxxxx)
+        'student_phone', // Nomor HP siswa (opsional)
     ];
 
     public function user()

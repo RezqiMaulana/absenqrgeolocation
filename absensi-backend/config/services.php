@@ -35,4 +35,16 @@ return [
         ],
     ],
 
+    /*
+    |--------------------------------------------------------------------------
+    | Fonnte WhatsApp API
+    |--------------------------------------------------------------------------
+    | Digunakan untuk mengirim notifikasi WhatsApp otomatis saat siswa absen.
+    | Token didapat dari dashboard fonnte.com setelah mendaftar dan
+    | menghubungkan nomor WhatsApp.
+    */
+    'fonnte' => [
+        'token' => env('FONNTE_TOKEN'),
+    ],
+
 ];

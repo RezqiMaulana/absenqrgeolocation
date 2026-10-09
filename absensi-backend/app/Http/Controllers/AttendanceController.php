@@ -3,6 +3,7 @@
 namespace App\Http\Controllers;
 
 use App\Http\Requests\StoreAttendanceRequest;
+use App\Jobs\SendAttendanceWhatsApp;
 use App\Models\Attendance;
 use App\Models\AttendanceSetting;
 use App\Models\Student;
@@ -113,14 +114,17 @@ class AttendanceController extends Controller
 
         // ---- 7. Simpan absensi ----
         $attendance = Attendance::create([
-            'student_id' => $student->id,
-            'date' => $today,
-            'time' => $now->format('H:i:s'),
-            'status' => $status,
-            'latitude' => $data['latitude'],
-            'longitude' => $data['longitude'],
+            'student_id'      => $student->id,
+            'date'            => $today,
+            'time'            => $now->format('H:i:s'),
+            'status'          => $status,
+            'latitude'        => $data['latitude'],
+            'longitude'       => $data['longitude'],
             'distance_meters' => $distanceMeters,
         ]);
+
+        // ---- 8. Kirim notifikasi WhatsApp via Queue (tidak memblokir response) ----
+        SendAttendanceWhatsApp::dispatch($attendance, $status);
 
         return response()->json([
             'message' => $status === 'hadir'
@@ -128,10 +132,10 @@ class AttendanceController extends Controller
                 : 'Absensi berhasil, kamu tercatat TERLAMBAT.',
             'attendance' => $attendance,
             'location' => [
-                'location_name' => $setting->location_name,
+                'location_name'   => $setting->location_name,
                 'distance_meters' => round($distanceMeters, 2),
-                'radius_meters' => $setting->radius_meters,
-                'status' => $status,
+                'radius_meters'   => $setting->radius_meters,
+                'status'          => $status,
             ],
         ], 201);
     }

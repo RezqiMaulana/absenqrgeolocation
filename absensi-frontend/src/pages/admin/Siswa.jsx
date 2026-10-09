@@ -163,13 +163,14 @@ export default function AdminSiswa() {
                 <th className="p-4">L/P</th>
                 <th className="p-4">Kelas</th>
                 <th className="p-4">Email / Akun</th>
+                <th className="p-4">No. HP Ortu</th>
                 <th className="p-4 text-right">Aksi</th>
               </tr>
             </thead>
             <tbody className="divide-y divide-border">
               {loading ? (
                 <tr>
-                  <td colSpan={6} className="p-12 text-center text-text-secondary">
+                  <td colSpan={7} className="p-12 text-center text-text-secondary">
                     <div className="flex flex-col items-center justify-center gap-2">
                       <span className="material-symbols-outlined animate-spin text-primary-container text-[32px]">sync</span>
                       <span>Memuat data siswa...</span>
@@ -178,7 +179,7 @@ export default function AdminSiswa() {
                 </tr>
               ) : students.length === 0 ? (
                 <tr>
-                  <td colSpan={6} className="p-12 text-center text-text-secondary">
+                  <td colSpan={7} className="p-12 text-center text-text-secondary">
                     <span className="material-symbols-outlined text-[36px] mb-1 opacity-40">folder_open</span>
                     <p>Tidak ada data siswa ditemukan.</p>
                   </td>
@@ -199,6 +200,16 @@ export default function AdminSiswa() {
                       </span>
                     </td>
                     <td className="p-4 text-text-secondary text-sm">{s.user?.email || '-'}</td>
+                    <td className="p-4 text-text-secondary text-sm">
+                      {s.parent_phone ? (
+                        <span className="flex items-center gap-1">
+                          <span className="text-green-600">📱</span>
+                          <span className="font-mono text-xs">{s.parent_phone}</span>
+                        </span>
+                      ) : (
+                        <span className="text-xs text-text-disabled italic">Belum diisi</span>
+                      )}
+                    </td>
                     <td className="p-4 text-right space-x-2">
                       <button
                         onClick={() => openEdit(s)}
